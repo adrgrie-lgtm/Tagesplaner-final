@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>📅 Familien-Tagesplaner</title>
+<title>📅 Familien-Tagesplaner v3</title>
 <style>
 :root{--p:#6200ee;--pc:#e8ddff;--s:#03dac6;--sf:#f5f5f5;--e:#b00020;--sc:#4caf50;--os:#1c1b1f;--osv:#49454f}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
@@ -31,6 +31,7 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 .ds{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:20px}
 .dc{min-width:60px;padding:10px 12px;border-radius:12px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;text-align:center;transition:all .2s}
 .dc:hover{border-colo
+
 
 r:var(--p)}
 .dc.selected{background:var(--p);color:#fff;border-color:var(--p)}
@@ -63,7 +64,8 @@ r:var(--p)}
 .bi.delete{color:var(--e);border-color:var(--e)}
 .do{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
 .do.active{display:flex}
-.d{background:#fff;border-radius:1
+.d{background:#fff;border-radius:
+1
 6
 px;padding:24px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.3)}
 .dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
@@ -97,7 +99,8 @@ px;padding:24px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;box-sh
 .sc{flex:1;min-width:120px;padding:12px 16px;background:#fff;border-radius:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.1)}
 .sv{font-size:1.5rem;font-weight:700;color:var(--p)}
 .sl{font-size:.8rem;color:var(--osv);margin-top:4px}
-.ib{background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:2
+.ib{background:#fff;border-radius:12px;padding:16px 20px;margin-bottom
+:2
 0p
 x;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .ibl{font-size:.85rem;color:var(--osv)}
@@ -142,7 +145,8 @@ x;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;justify-content:space-between
 <div class="wh"><h2 class="wt">Alle Termine & Aufgaben</h2><p class="ws">Gesamte Planung im Überblick</p></div>
 <div class="sr" id="statsRow">
 <div class="sc"><div class="sv" id="totalEvents">0</div><div class="sl">Termine</div></div>
-<div class="sc"><div class="sv" id="total
+<div class="sc"><div class="sv" id="to
+tal
 Tas
 ks">0</div><div class="sl">Aufgaben</div></div>
 <div class="sc"><div class="sv" id="completedCount">0</div><div class="sl">Erledigt</div></div>
@@ -180,7 +184,8 @@ ks">0</div><div class="sl">Aufgaben</div></div>
 <div class="fg"><label class="fl">Für wen?</label><select class="finput" id="eventPerson"><option value="family">👨‍👩‍👧‍👦 Familie</option></select></div>
 <div class="fg"><label class="fl">Datum</label><input type="date" class="finput" id="eventDate"></div>
 <div class="fr">
-<div class="fg" style="flex:1"><label class="fl">Startzeit</l
+<div class="fg" style="flex:1"><label class="fl">Startzei
+t</l
 abel
 ><input type="time" class="finput" id="eventStartTime"></div>
 <div class="fg" style="flex:1"><label class="fl">Dauer (Min.)</label><input type="number" class="finput" id="eventDuration" value="45" min="15" max="480"></div>
@@ -199,7 +204,8 @@ abel
 <div class="fg"><label class="fl">Familienname</label><input type="text" class="finput" id="familyName" placeholder="z.B. Familie Müller"></div>
 <div class="fg"><label class="fl">Ihr Name</label><input type="text" class="finput" id="myName" placeholder="Ihr Vorname"></div>
 <div class="fg"><label class="fl">Rolle</label><select class="finput" id="myRole"><option value="Mama">Mama</option><option value="Papa">Papa</option><option value="Kind">Kind</option><option value="Sonstiges">Sonstiges</option></select></div>
-<div class="fg"><label class="fl">Emoji</label><select class="finput" id="myEmoji"><option value="👩">👩</option><option value="👨">👨</option><option value="👧">👧</option><option value="👦">👦</option
+<div class="fg"><label class="fl">Emoji</label><select class="finput" id="myEmoji"><option value="👩">👩</option><option value="👨">👨</option><option value="👧">👧</option><option value="👦">👦</o
+ption
 ><opt
 ion value="😊">😊</option><option value="🌟">🌟</option></select></div>
 <div class="da"><button class="btn bs" onclick="closeFamilyDialog()">Abbrechen</button><button class="btn bp" onclick="createFamily()">Familie gründen</button></div>
@@ -225,7 +231,8 @@ ion value="😊">😊</option><option value="🌟">🌟</option></select></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/
+<script src="https://www.gstatic.com/fireb
+asejs/
 10.12.
 2/firebase-firestore-compat.js"></script>
 <script>
@@ -266,7 +273,8 @@ function saveLocalState() {
   localStorage.setItem('familienplaner_family', JSON.stringify(family));
   localStorage.setItem('familienplaner_members', JSON.stringify(members));
 }
-function setSync(text) { doc
+function setSync(text
+) { doc
 ument.g
 etElementById('syncText').textContent = text; }
 function isSynced() { return !!(SYNC_ENABLED && db && family && family.inviteCode); }
@@ -275,8 +283,9 @@ function evCol(code) { return famDoc(code).collection('events'); }
 function memCol(code) { return famDoc(code).collection('members'); }
 
 // ================= FIREBASE =================
-async function initSync() {
-  try {
+async var __t=setTimeout(function(){setSync('Lokal (Offline – Anmeldung hängt/blockiert)');},15000);
+function initSync() {
+  try { clearTimeout(__t);
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
     try { await firebase.firestore().enablePersistence({ synchronizeTabs: true }); } catch (e) { }
@@ -312,7 +321,8 @@ function showCreateFamily() {
   document.getElementById('familyDialogTitle').textContent = 'Familie gründen';
   document.getElementById('createFamilyForm').style.display = 'block';
   document.getElementById('joinFamilyForm').style.display = 'none';
-  document.getElementById('familyDialog').classList.add('active');
+  document.getElem
+entById('familyDialog').classList.add('active');
 }
 function showJoinF
 amily() 
@@ -351,7 +361,8 @@ function joinFamily() {
   const code = document.getElementById('inviteCode').value.trim().toUpperCase();
   const myName = document.getElementById('joinName').value.trim();
   const myRole = document.getElementById('joinRole').value;
-  const myEmoji = document.getElementById('joinEmoji').value;
+  const myEmoji = 
+document.getElementById('joinEmoji').value;
   if (!code || !myName) { 
 alert('Bi
 tte geben Sie Einladungscode und Ihren Namen ein'); return; }
@@ -394,7 +405,8 @@ function updateFamilyUI() {
     const familySpan = document.createElement('span');
     familySpan.className = 'fm';
     familySpan.innerHTML = '👨‍👩‍👧‍👦 ' + esc(family.name);
-    familyInfo.appendChild(familySpan);
+    familyInfo.appendCh
+ild(familySpan);
     document.getElementById('familySetup').style.displ
 ay = 'none
 ';
@@ -441,6 +453,7 @@ function renderFamilyMembers() {
   }
 }
 
+
 function copyInviteCode() {
   const code = family && family.inviteCode;
 
@@ -483,7 +496,8 @@ function openAddDialog(event) {
     document.getElementById('eventTitle').value = '';
     const defaultPerson = myMemberId || (members.length > 0 ? members[0].id : 'family');
     document.getElementById('eventPerson').value = defaultPerson;
-    document.getElementById('eventDate').value = selectedDate;
+    document.getElementById('eventDate').val
+ue = selectedDate;
     document.getElementById('eventStartTime').value = 
 '14:00';
    
@@ -535,7 +549,8 @@ function saveEvent() {
   };
 
   if (isSynced()) {
-    evCol(family.inviteCode).doc(event.id).set(event).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
+    evCol(family.inviteCode).doc(event.id).set(event).catch(function (err) { alert('Syn
+c-Fehler: ' + err.message); });
   } else {
     const index = events.findIn
 dex(function 
@@ -590,7 +605,8 @@ function switchTab(tabName) {
   document.querySelector('[onclick="switchTab(\'' + tabName + '\')"]').classList.add('active');
   document.getElementById(tabName).classList.add('active');
   switch (tabName) {
-    case 'today': renderToday(); break;
+    case
+ 'today': renderToday(); break;
     case 'week': renderWeek(); break;
     c
 ase 'schedule'
@@ -638,7 +654,8 @@ function updateDaySelector() {
 
 function selectDate(date) {
   selectedDate = date;
-  currentDate = date;
+  currentDat
+e = date;
   updateDaySelector();
   renderToday();
   renderWeek();
@@ -654,7 +671,6 @@ function formatDate(dateStr) {
   const date = new Date(dateStr + 'T00:00:00');
   return getFullDayName(date.getDay()) + ', ' + date.getDate() + '. ' + getMonthName(date.getMonth()) + ' ' + date.getFullYear();
 }
-function formatTime(timeStr) { if (!timeStr) return ''; const p = timeStr.split(':'); return p[0] + ':' + p[1]; }
-function formatDurati
+function formatTime(timeStr) { if (!timeStr) return ''; co
 
 ... [Content truncated]
