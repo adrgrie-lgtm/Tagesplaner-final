@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>📅 Familien-Tagesplaner v8</title>
+<title>📅 Familien-Tagesplaner v9</title>
 <style>
 :root{--p:#6200ee;--pc:#e8ddff;--s:#03dac6;--sf:#f5f5f5;--e:#b00020;--sc:#4caf50;--os:#1c1b1f;--osv:#49454f}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
@@ -30,12 +30,7 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 .ws{color:var(--osv);margin-bottom:20px}
 .ds{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:20px}
 .dc{min-width:60px;padding:10px 12px;border-radius:12px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;text-align:center;transition:all .2s}
-.dc:hover{border-c
-
-olo
-
-
-r:var(--p)}
+.dc:hover{border-color:var(--p)}
 .dc.selected{background:var(--p);color:#fff;border-color:var(--p)}
 .dc.today{border-color:var(--p);background:var(--pc)}
 .dn{font-size:.7rem;font-weight:600;text-transform:uppercase;margin-bottom:4px}
@@ -66,12 +61,7 @@ r:var(--p)}
 .bi.delete{color:var(--e);border-color:var(--e)}
 .do{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
 .do.active{display:flex}
-.d{background:#fff;border-ra
-d
-ius:
-1
-6
-px;padding:24px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.d{background:#fff;border-radius:16px;padding:24px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.3)}
 .dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 .dt{font-size:1.3rem;font-weight:600}
 .dcb{background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666}
@@ -103,12 +93,7 @@ px;padding:24px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;box-sh
 .sc{flex:1;min-width:120px;padding:12px 16px;background:#fff;border-radius:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.1)}
 .sv{font-size:1.5rem;font-weight:700;color:var(--p)}
 .sl{font-size:.8rem;color:var(--osv);margin-top:4px}
-.ib{background:#fff;border-radius:12px;padding:16px 20px;margin
--b
-ottom
-:2
-0p
-x;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.ib{background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .ibl{font-size:.85rem;color:var(--osv)}
 .icode{font-size:1.4rem;font-weight:700;color:var(--p);letter-spacing:2px}
 .ihint{font-size:.8rem;color:var(--osv);margin-top:8px}
@@ -120,7 +105,7 @@ x;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;justify-content:space-between
 <div class="hc">
 <div><h1>📅 Familien-Tagesplaner</h1></div>
 <div class="ha">
-<div class="ss" id="syncStatus"><span class="si"></span><span id="syncText">Lokal (wird gestartet…)</span></div>
+<div class="ss" id="syncStatus"><span class="si"></span><span id="syncText">Lokal (Offline)</span></div>
 <div class="finfo" id="familyInfo"></div>
 <button class="btn bp" onclick="openAddDialog()">+ Neu</button>
 </div>
@@ -151,12 +136,7 @@ x;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;justify-content:space-between
 <div class="wh"><h2 class="wt">Alle Termine & Aufgaben</h2><p class="ws">Gesamte Planung im Überblick</p></div>
 <div class="sr" id="statsRow">
 <div class="sc"><div class="sv" id="totalEvents">0</div><div class="sl">Termine</div></div>
-<div class="sc"><div class="s
-v" 
-id="to
-tal
-Tas
-ks">0</div><div class="sl">Aufgaben</div></div>
+<div class="sc"><div class="sv" id="totalTasks">0</div><div class="sl">Aufgaben</div></div>
 <div class="sc"><div class="sv" id="completedCount">0</div><div class="sl">Erledigt</div></div>
 <div class="sc"><div class="sv" id="recurringCount">0</div><div class="sl">Wiederkehrend</div></div>
 </div>
@@ -192,12 +172,7 @@ ks">0</div><div class="sl">Aufgaben</div></div>
 <div class="fg"><label class="fl">Für wen?</label><select class="finput" id="eventPerson"><option value="family">👨‍👩‍👧‍👦 Familie</option></select></div>
 <div class="fg"><label class="fl">Datum</label><input type="date" class="finput" id="eventDate"></div>
 <div class="fr">
-<div class="fg" style="flex:1"><label class="f
-l">S
-tartzei
-t</l
-abel
-><input type="time" class="finput" id="eventStartTime"></div>
+<div class="fg" style="flex:1"><label class="fl">Startzeit</label><input type="time" class="finput" id="eventStartTime"></div>
 <div class="fg" style="flex:1"><label class="fl">Dauer (Min.)</label><input type="number" class="finput" id="eventDuration" value="45" min="15" max="480"></div>
 </div>
 <div class="fg"><label class="fl">Typ</label><select class="finput" id="eventType"><option value="event">📅 Termin</option><option value="task">✅ Aufgabe</option></select></div>
@@ -214,12 +189,7 @@ abel
 <div class="fg"><label class="fl">Familienname</label><input type="text" class="finput" id="familyName" placeholder="z.B. Familie Müller"></div>
 <div class="fg"><label class="fl">Ihr Name</label><input type="text" class="finput" id="myName" placeholder="Ihr Vorname"></div>
 <div class="fg"><label class="fl">Rolle</label><select class="finput" id="myRole"><option value="Mama">Mama</option><option value="Papa">Papa</option><option value="Kind">Kind</option><option value="Sonstiges">Sonstiges</option></select></div>
-<div class="fg"><label class="fl">Emoji</label><select class="finput" id="myEmoji"><option value="👩">👩</option><option value="👨">👨</option><option value="👧">👧</option><option v
-alue=
-"👦">👦</o
-ption
-><opt
-ion value="😊">😊</option><option value="🌟">🌟</option></select></div>
+<div class="fg"><label class="fl">Emoji</label><select class="finput" id="myEmoji"><option value="👩">👩</option><option value="👨">👨</option><option value="👧">👧</option><option value="👦">👦</option><option value="😊">😊</option><option value="🌟">🌟</option></select></div>
 <div class="da"><button class="btn bs" onclick="closeFamilyDialog()">Abbrechen</button><button class="btn bp" onclick="createFamily()">Familie gründen</button></div>
 </div>
 <div id="joinFamilyForm" style="display:none">
@@ -243,12 +213,7 @@ ion value="😊">😊</option><option value="🌟">🌟</option></select></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gs
-tatic.
-com/fireb
-asejs/
-10.12.
-2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 // ================= KONFIGURATION =================
 // Hier die Werte aus der Firebase-Konsole eintragen:
@@ -287,22 +252,15 @@ function saveLocalState() {
   localStorage.setItem('familienplaner_family', JSON.stringify(family));
   localStorage.setItem('familienplaner_members', JSON.stringify(members));
 }
-func
-tion se
-tSync(text
-) { doc
-ument.g
-etElementById('syncText').textContent = text; }
+function setSync(text) { document.getElementById('syncText').textContent = text; }
 function isSynced() { return !!(SYNC_ENABLED && db && family && family.inviteCode); }
 function famDoc(code) { return db.collection('families').doc(code); }
 function evCol(code) { return famDoc(code).collection('events'); }
 function memCol(code) { return famDoc(code).collection('members'); }
 
 // ================= FIREBASE =================
-var __t = setTimeout(function () { setSync('Lokal (Offline – Anmeldung hängt/blockiert)'); }, 8000);
 async function initSync() {
-  try { clearTimeout(__t);
-    setSync('Verbinde…');
+  try {
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
     try { await firebase.firestore().enablePersistence({ synchronizeTabs: true }); } catch (e) { }
@@ -336,16 +294,11 @@ function subscribeAll(code) {
 // ================= FAMILIE =================
 function showCreateFamily() {
   document.getElementById('familyDialogTitle').textContent = 'Familie gründen';
-  document.getElementByI
-d('creat
-eFamilyForm').style.display = 'block';
+  document.getElementById('createFamilyForm').style.display = 'block';
   document.getElementById('joinFamilyForm').style.display = 'none';
-  document.getElem
-entById('familyDialog').classList.add('active');
+  document.getElementById('familyDialog').classList.add('active');
 }
-function showJoinF
-amily() 
-{
+function showJoinFamily() {
   document.getElementById('familyDialogTitle').textContent = 'Familie beitreten';
   document.getElementById('createFamilyForm').style.display = 'none';
   document.getElementById('joinFamilyForm').style.display = 'block';
@@ -378,15 +331,10 @@ function createFamily() {
 
 function joinFamily() {
   const code = document.getElementById('inviteCode').value.trim().toUpperCase();
-  const my
-Name = do
-cument.getElementById('joinName').value.trim();
+  const myName = document.getElementById('joinName').value.trim();
   const myRole = document.getElementById('joinRole').value;
-  const myEmoji = 
-document.getElementById('joinEmoji').value;
-  if (!code || !myName) { 
-alert('Bi
-tte geben Sie Einladungscode und Ihren Namen ein'); return; }
+  const myEmoji = document.getElementById('joinEmoji').value;
+  if (!code || !myName) { alert('Bitte geben Sie Einladungscode und Ihren Namen ein'); return; }
   const member = { id: randId('mem'), name: myName, role: myRole, emoji: myEmoji, color: getColorForRole(myRole), createdAt: new Date().toISOString() };
   myMemberId = member.id;
   localStorage.setItem('fp_myMemberId', myMemberId);
@@ -423,16 +371,11 @@ function updateFamilyUI() {
   const familyInfo = document.getElementById('familyInfo');
   familyInfo.innerHTML = '';
   if (family) {
-    const familySpan = document.
-createElem
-ent('span');
+    const familySpan = document.createElement('span');
     familySpan.className = 'fm';
     familySpan.innerHTML = '👨‍👩‍👧‍👦 ' + esc(family.name);
-    familyInfo.appendCh
-ild(familySpan);
-    document.getElementById('familySetup').style.displ
-ay = 'none
-';
+    familyInfo.appendChild(familySpan);
+    document.getElementById('familySetup').style.display = 'none';
     document.getElementById('familyMembersSection').style.display = 'block';
     renderFamilyMembers();
   } else {
@@ -470,20 +413,15 @@ function renderFamilyMembers() {
       const member = { id: randId('mem'), name: name, role: role, emoji: emoji, color: getColorForRole(role), createdAt: new Date().toISOString() };
       members.push(member);
       saveLocalState(); updatePersonSelect(); renderFamilyMembers();
-      if (isSynced()) memCol(family.inviteCode).d
-oc(member.i
-d).set(member).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
+      if (isSynced()) memCol(family.inviteCode).doc(member.id).set(member).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
     };
     container.appendChild(addBtn);
   }
 }
 
-
 function copyInviteCode() {
   const code = family && family.inviteCode;
-
-  if (!cod
-e) return;
+  if (!code) return;
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(code).then(function () { alert('Einladungscode kopiert: ' + code); }, function () { alert('Einladungscode: ' + code); });
   } else {
@@ -519,16 +457,11 @@ function openAddDialog(event) {
     editingEventId = null;
     document.getElementById('dialogTitle').textContent = 'Neuer Termin';
     document.getElementById('eventTitle').value = '';
-    const defaultPerson = myMemberId || (members.length > 
-0 ? members[
-0].id : 'family');
+    const defaultPerson = myMemberId || (members.length > 0 ? members[0].id : 'family');
     document.getElementById('eventPerson').value = defaultPerson;
-    document.getElementById('eventDate').val
-ue = selectedDate;
-    document.getElementById('eventStartTime').value = 
-'14:00';
-   
- document.getElementById('eventDuration').value = 45;
+    document.getElementById('eventDate').value = selectedDate;
+    document.getElementById('eventStartTime').value = '14:00';
+    document.getElementById('eventDuration').value = 45;
     document.getElementById('eventType').value = 'event';
     document.getElementById('eventRecurrence').value = 'none';
     document.getElementById('eventNotes').value = '';
@@ -572,18 +505,13 @@ function saveEvent() {
     notes: notes,
     isCompleted: existing ? existing.isCompleted : false,
     createdAt: existing ? existing.createdAt : new Date().toISOString(),
-    update
-dAt: new Date
-().toISOString()
+    updatedAt: new Date().toISOString()
   };
 
   if (isSynced()) {
-    evCol(family.inviteCode).doc(event.id).set(event).catch(function (err) { alert('Syn
-c-Fehler: ' + err.message); });
+    evCol(family.inviteCode).doc(event.id).set(event).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
   } else {
-    const index = events.findIn
-dex(function 
-(e) { return e.id === event.id; });
+    const index = events.findIndex(function (e) { return e.id === event.id; });
     if (index !== -1) events[index] = event; else events.push(event);
     saveLocalState(); renderAllTabs(); updateDaySelector();
   }
@@ -631,17 +559,12 @@ function confirmDelete() {
 function switchTab(tabName) {
   document.querySelectorAll('.ntb').forEach(function (tab) { tab.classList.remove('active'); });
   document.querySelectorAll('.wv').forEach(function (view) { view.classList.remove('active'); });
-  document.querySelector('[onclick="swit
-chTab(\'' + ta
-bName + '\')"]').classList.add('active');
+  document.querySelector('[onclick="switchTab(\'' + tabName + '\')"]').classList.add('active');
   document.getElementById(tabName).classList.add('active');
   switch (tabName) {
-    case
- 'today': renderToday(); break;
+    case 'today': renderToday(); break;
     case 'week': renderWeek(); break;
-    c
-ase 'schedule'
-: renderSchedule(); break;
+    case 'schedule': renderSchedule(); break;
     case 'family': updateFamilyUI(); break;
   }
 }
@@ -678,30 +601,183 @@ function updateDaySelector() {
     dayChip.className = 'dc ' + (day.isToday ? 'today ' : '') + (day.isSelected ? 'selected' : '');
     dayChip.onclick = function () { selectDate(day.date); };
     dayChip.innerHTML = '<div class="dn">' + (day.isToday ? 'HEUTE' : day.dayName) + '</div><div class="dnb">' + day.dayNumber + '</div><div class="ed">' + (dots || '<span style="opacity:0">.</span>') + '</div>';
-    contai
-ner.appendChild
-(dayChip);
+    container.appendChild(dayChip);
   });
   weekContainer.innerHTML = container.innerHTML;
 }
 
 function selectDate(date) {
   selectedDate = date;
-  currentDat
-e = date;
+  currentDate = date;
   updateDaySelector();
   renderToday();
   renderWeek();
 }
 
-functio
-n getDayName(da
-yIndex) { return ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][dayIndex]; }
+function getDayName(dayIndex) { return ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][dayIndex]; }
 function getFullDayName(dayIndex) { return ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'][dayIndex]; }
 function getMonthName(monthIndex) { return ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'][monthIndex]; }
 
 function formatDate(dateStr) {
   const date = new Date(dateStr + 'T00:00:00');
-  return getFullDayName(date.getDay()) + 
+  return getFullDayName(date.getDay()) + ', ' + date.getDate() + '. ' + getMonthName(date.getMonth()) + ' ' + date.getFullYear();
+}
+function formatTime(timeStr) { if (!timeStr) return ''; const p = timeStr.split(':'); return p[0] + ':' + p[1]; }
+function formatDuration(minutes) {
+  if (minutes < 60) return minutes + ' Min.';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? hours + 'h ' + mins + 'min' : hours + 'h';
+}
+function getRecurrenceLabel(recurrence) {
+  const labels = { 'daily': 'Täglich', 'weekly': 'Wöchentlich', 'monthly': 'Monatlich', 'workdays': 'Mo-Fr', 'biweekly': 'Alle 2 Wochen' };
+  return labels[recurrence] || recurrence;
+}
 
-... [Content truncated]
+function endTimeOf(event) {
+  const parts = event.startTime ? event.startTime.split(':') : ['14', '00'];
+  const end = new Date(2024, 0, 1, parseInt(parts[0]), parseInt(parts[1]) + (event.durationMinutes || 45));
+  return String(end.getHours()).padStart(2, '0') + ':' + String(end.getMinutes()).padStart(2, '0');
+}
+
+function personLabel(personId) {
+  const member = members.find(function (m) { return m.id === personId; });
+  return member ? { emoji: member.emoji, name: member.name } : { emoji: '👤', name: 'Familie' };
+}
+
+function eventCardHTML(event) {
+  const p = personLabel(event.personId);
+  return '<div class="ec ' + (event.isCompleted ? 'completed ' : '') + (event.isTask ? 'task' : '') + '">' +
+    '<div class="eh"><span class="et">' + formatTime(event.startTime) + ' - ' + endTimeOf(event) + ' (' + formatDuration(event.durationMinutes || 45) + ')</span><div class="eb">' +
+    (event.recurrence ? '<span class="b recurring">🔄 ' + getRecurrenceLabel(event.recurrence) + '</span>' : '') +
+    (event.isTask ? '<span class="b task">✅ Aufgabe</span>' : '') +
+    '</div></div>' +
+    '<div class="etl">' + esc(event.title) + '</div>' +
+    '<div style="margin-top:8px"><span class="ep">' + esc(p.emoji) + ' ' + esc(p.name) + '</span></div>' +
+    (event.notes ? '<div style="margin-top:8px;color:#666;font-size:.9rem">' + esc(event.notes) + '</div>' : '') +
+    '<div class="ea">' +
+    '<button class="bi ' + (event.isCompleted ? 'complete' : '') + '" onclick="toggleComplete(\'' + event.id + '\')">' + (event.isCompleted ? '✓ Erledigt' : '✓ Als erledigt markieren') + '</button>' +
+    '<button class="bi" onclick="openEditDialog(\'' + event.id + '\')">⚙️ Bearbeiten</button>' +
+    '<button class="bi delete" onclick="showDeleteDialog(\'' + event.id + '\')">🗑️ Löschen</button>' +
+    '</div></div>';
+}
+
+function renderToday() {
+  const today = new Date().toISOString().split('T')[0];
+  const activeDate = selectedDate || today;
+  const todayEvents = events.filter(function (e) { return e.date === activeDate; });
+  document.getElementById('todayTitle').textContent = formatDate(activeDate);
+  document.getElementById('todaySubtitle').textContent = todayEvents.length + ' Termine';
+  document.getElementById('todayEventsCount').textContent = todayEvents.length + ' Termine';
+  updateDaySelector();
+  const container = document.getElementById('todayEvents');
+  if (todayEvents.length === 0) {
+    container.innerHTML = '<div class="es" style="text-align:center;padding:40px 20px"><div class="esi">🌞</div><h3>Keine Termine für diesen Tag</h3><p>Tippen Sie auf "+ Neu", um einen Termin hinzuzufügen</p></div>';
+    return;
+  }
+  let html = '';
+  todayEvents.sort(function (a, b) { return (a.startTime || '').localeCompare(b.startTime || ''); }).forEach(function (e) { html += eventCardHTML(e); });
+  container.innerHTML = html;
+}
+
+function renderWeek() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let weekEvents = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    const dateStr = date.toISOString().split('T')[0];
+    events.filter(function (e) { return e.date === dateStr; }).forEach(function (evt) { weekEvents.push(evt); });
+  }
+  weekEvents.sort(function (a, b) { return a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || ''); });
+  const container = document.getElementById('weekEvents');
+  if (weekEvents.length === 0) {
+    container.innerHTML = '<div class="es" style="text-align:center;padding:40px 20px"><div class="esi">📆</div><h3>Keine Termine in dieser Woche</h3></div>';
+    return;
+  }
+  const groupedByDate = {};
+  weekEvents.forEach(function (event) {
+    if (!groupedByDate[event.date]) groupedByDate[event.date] = [];
+    groupedByDate[event.date].push(event);
+  });
+  let html = '';
+  for (const date in groupedByDate) {
+    html += '<div style="margin-bottom:20px"><div class="sh"><span class="st">' + formatDate(date) + '</span><span style="color:var(--osv);font-size:.85rem">' + groupedByDate[date].length + ' Termine</span></div>';
+    groupedByDate[date].forEach(function (event) { html += eventCardHTML(event); });
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function renderSchedule() {
+  const container = document.getElementById('allEvents');
+  const allEvents = events.slice().sort(function (a, b) { return a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || ''); });
+  const totalEvents = allEvents.filter(function (e) { return !e.isTask; }).length;
+  const totalTasks = allEvents.filter(function (e) { return e.isTask; }).length;
+  const completedCount = allEvents.filter(function (e) { return e.isCompleted; }).length;
+  const recurringCount = allEvents.filter(function (e) { return e.recurrence; }).length;
+  document.getElementById('totalEvents').textContent = totalEvents;
+  document.getElementById('totalTasks').textContent = totalTasks;
+  document.getElementById('completedCount').textContent = completedCount;
+  document.getElementById('recurringCount').textContent = recurringCount;
+  if (allEvents.length === 0) {
+    container.innerHTML = '<div class="es" style="text-align:center;padding:40px 20px"><div class="esi">📋</div><h3>Keine Einträge vorhanden</h3><p>Tippen Sie auf "+ Neu", um einen Termin hinzuzufügen</p></div>';
+    return;
+  }
+  const groupedByDate = {};
+  allEvents.forEach(function (event) {
+    if (!groupedByDate[event.date]) groupedByDate[event.date] = [];
+    groupedByDate[event.date].push(event);
+  });
+  let html = '';
+  for (const date in groupedByDate) {
+    html += '<div style="margin-bottom:20px"><div class="sh"><span class="st">' + formatDate(date) + '</span><span style="color:var(--osv);font-size:.85rem">' + groupedByDate[date].length + ' Einträge</span></div>';
+    groupedByDate[date].forEach(function (event) { html += eventCardHTML(event); });
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function updatePersonSelect() {
+  const select = document.getElementById('eventPerson');
+  select.innerHTML = '';
+  const familyOption = document.createElement('option');
+  familyOption.value = 'family';
+  familyOption.textContent = '👨‍👩‍👧‍👦 Familie';
+  select.appendChild(familyOption);
+  members.forEach(function (member) {
+    const option = document.createElement('option');
+    option.value = member.id;
+    option.textContent = member.emoji + ' ' + member.name;
+    select.appendChild(option);
+  });
+}
+
+// ================= START =================
+async function init() {
+  loadLocal();
+  document.getElementById('eventDate').value = currentDate;
+  document.getElementById('eventStartTime').value = '14:00';
+  if (!family && members.length === 0) {
+    members.push({ id: 'user1', name: 'Nutzer', role: 'Mitglied', emoji: '👤', color: '#6200ee' });
+    saveLocalState();
+  }
+  updatePersonSelect(); updateFamilyUI(); renderAllTabs(); updateDaySelector();
+  if (SYNC_ENABLED) {
+    setSync('Verbinde…');
+    await initSync();
+  } else {
+    setSync('Lokal (Offline)');
+  }
+}
+
+init();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () { });
+  });
+}
+</script>
+</body>
+</html>
