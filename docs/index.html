@@ -31,6 +31,7 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 .ds{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:20px}
 .dc{min-width:60px;padding:10px 12px;border-radius:12px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;text-align:center;transition:all .2s}
 .dc:hover{border-c
+
 olo
 
 
@@ -65,7 +66,8 @@ r:var(--p)}
 .bi.delete{color:var(--e);border-color:var(--e)}
 .do{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
 .do.active{display:flex}
-.d{background:#fff;border-rad
+.d{background:#fff;border-ra
+d
 ius:
 1
 6
@@ -101,7 +103,8 @@ px;padding:24px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;box-sh
 .sc{flex:1;min-width:120px;padding:12px 16px;background:#fff;border-radius:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.1)}
 .sv{font-size:1.5rem;font-weight:700;color:var(--p)}
 .sl{font-size:.8rem;color:var(--osv);margin-top:4px}
-.ib{background:#fff;border-radius:12px;padding:16px 20px;margin-b
+.ib{background:#fff;border-radius:12px;padding:16px 20px;margin
+-b
 ottom
 :2
 0p
@@ -117,7 +120,7 @@ x;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;justify-content:space-between
 <div class="hc">
 <div><h1>📅 Familien-Tagesplaner</h1></div>
 <div class="ha">
-<div class="ss" id="syncStatus"><span class="si"></span><span id="syncText">Lokal (Offline)</span></div>
+<div class="ss" id="syncStatus"><span class="si"></span><span id="syncText">Lokal (wird gestartet…)</span></div>
 <div class="finfo" id="familyInfo"></div>
 <button class="btn bp" onclick="openAddDialog()">+ Neu</button>
 </div>
@@ -148,7 +151,8 @@ x;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;justify-content:space-between
 <div class="wh"><h2 class="wt">Alle Termine & Aufgaben</h2><p class="ws">Gesamte Planung im Überblick</p></div>
 <div class="sr" id="statsRow">
 <div class="sc"><div class="sv" id="totalEvents">0</div><div class="sl">Termine</div></div>
-<div class="sc"><div class="sv" 
+<div class="sc"><div class="s
+v" 
 id="to
 tal
 Tas
@@ -188,7 +192,8 @@ ks">0</div><div class="sl">Aufgaben</div></div>
 <div class="fg"><label class="fl">Für wen?</label><select class="finput" id="eventPerson"><option value="family">👨‍👩‍👧‍👦 Familie</option></select></div>
 <div class="fg"><label class="fl">Datum</label><input type="date" class="finput" id="eventDate"></div>
 <div class="fr">
-<div class="fg" style="flex:1"><label class="fl">S
+<div class="fg" style="flex:1"><label class="f
+l">S
 tartzei
 t</l
 abel
@@ -209,7 +214,8 @@ abel
 <div class="fg"><label class="fl">Familienname</label><input type="text" class="finput" id="familyName" placeholder="z.B. Familie Müller"></div>
 <div class="fg"><label class="fl">Ihr Name</label><input type="text" class="finput" id="myName" placeholder="Ihr Vorname"></div>
 <div class="fg"><label class="fl">Rolle</label><select class="finput" id="myRole"><option value="Mama">Mama</option><option value="Papa">Papa</option><option value="Kind">Kind</option><option value="Sonstiges">Sonstiges</option></select></div>
-<div class="fg"><label class="fl">Emoji</label><select class="finput" id="myEmoji"><option value="👩">👩</option><option value="👨">👨</option><option value="👧">👧</option><option value=
+<div class="fg"><label class="fl">Emoji</label><select class="finput" id="myEmoji"><option value="👩">👩</option><option value="👨">👨</option><option value="👧">👧</option><option v
+alue=
 "👦">👦</o
 ption
 ><opt
@@ -237,7 +243,8 @@ ion value="😊">😊</option><option value="🌟">🌟</option></select></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.
+<script src="https://www.gs
+tatic.
 com/fireb
 asejs/
 10.12.
@@ -280,7 +287,8 @@ function saveLocalState() {
   localStorage.setItem('familienplaner_family', JSON.stringify(family));
   localStorage.setItem('familienplaner_members', JSON.stringify(members));
 }
-function se
+func
+tion se
 tSync(text
 ) { doc
 ument.g
@@ -327,7 +335,8 @@ function subscribeAll(code) {
 // ================= FAMILIE =================
 function showCreateFamily() {
   document.getElementById('familyDialogTitle').textContent = 'Familie gründen';
-  document.getElementById('creat
+  document.getElementByI
+d('creat
 eFamilyForm').style.display = 'block';
   document.getElementById('joinFamilyForm').style.display = 'none';
   document.getElem
@@ -368,7 +377,8 @@ function createFamily() {
 
 function joinFamily() {
   const code = document.getElementById('inviteCode').value.trim().toUpperCase();
-  const myName = do
+  const my
+Name = do
 cument.getElementById('joinName').value.trim();
   const myRole = document.getElementById('joinRole').value;
   const myEmoji = 
@@ -412,7 +422,8 @@ function updateFamilyUI() {
   const familyInfo = document.getElementById('familyInfo');
   familyInfo.innerHTML = '';
   if (family) {
-    const familySpan = document.createElem
+    const familySpan = document.
+createElem
 ent('span');
     familySpan.className = 'fm';
     familySpan.innerHTML = '👨‍👩‍👧‍👦 ' + esc(family.name);
@@ -458,7 +469,8 @@ function renderFamilyMembers() {
       const member = { id: randId('mem'), name: name, role: role, emoji: emoji, color: getColorForRole(role), createdAt: new Date().toISOString() };
       members.push(member);
       saveLocalState(); updatePersonSelect(); renderFamilyMembers();
-      if (isSynced()) memCol(family.inviteCode).doc(member.i
+      if (isSynced()) memCol(family.inviteCode).d
+oc(member.i
 d).set(member).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
     };
     container.appendChild(addBtn);
@@ -506,7 +518,8 @@ function openAddDialog(event) {
     editingEventId = null;
     document.getElementById('dialogTitle').textContent = 'Neuer Termin';
     document.getElementById('eventTitle').value = '';
-    const defaultPerson = myMemberId || (members.length > 0 ? members[
+    const defaultPerson = myMemberId || (members.length > 
+0 ? members[
 0].id : 'family');
     document.getElementById('eventPerson').value = defaultPerson;
     document.getElementById('eventDate').val
@@ -558,7 +571,8 @@ function saveEvent() {
     notes: notes,
     isCompleted: existing ? existing.isCompleted : false,
     createdAt: existing ? existing.createdAt : new Date().toISOString(),
-    updatedAt: new Date
+    update
+dAt: new Date
 ().toISOString()
   };
 
@@ -616,7 +630,8 @@ function confirmDelete() {
 function switchTab(tabName) {
   document.querySelectorAll('.ntb').forEach(function (tab) { tab.classList.remove('active'); });
   document.querySelectorAll('.wv').forEach(function (view) { view.classList.remove('active'); });
-  document.querySelector('[onclick="switchTab(\'' + ta
+  document.querySelector('[onclick="swit
+chTab(\'' + ta
 bName + '\')"]').classList.add('active');
   document.getElementById(tabName).classList.add('active');
   switch (tabName) {
@@ -662,7 +677,8 @@ function updateDaySelector() {
     dayChip.className = 'dc ' + (day.isToday ? 'today ' : '') + (day.isSelected ? 'selected' : '');
     dayChip.onclick = function () { selectDate(day.date); };
     dayChip.innerHTML = '<div class="dn">' + (day.isToday ? 'HEUTE' : day.dayName) + '</div><div class="dnb">' + day.dayNumber + '</div><div class="ed">' + (dots || '<span style="opacity:0">.</span>') + '</div>';
-    container.appendChild
+    contai
+ner.appendChild
 (dayChip);
   });
   weekContainer.innerHTML = container.innerHTML;
@@ -685,6 +701,6 @@ function getMonthName(monthIndex) { return ['Januar', 'Februar', 'März', 'April
 
 function formatDate(dateStr) {
   const date = new Date(dateStr + 'T00:00:00');
-  return getFullDayName(date.getDay()) + ', ' + date.getD
+  return getFullDayName(date.getDay()) + 
 
 ... [Content truncated]
