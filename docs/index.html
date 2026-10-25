@@ -51,6 +51,7 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 .b{padding:3px 8px;border-radius:6px;font-size:.7rem;font-weight:600;text-transform:uppercase}
 .b.task{background:#e8f5e9;color:#2e7d32}
 .b.recurring{background:#fff3e0;color:#e65100}
+.b.fixed{background:#ffebee;color:#c62828}
 .etl{font-size:1.1rem;font-weight:600;margin-bottom:6px}
 .ec.completed .etl{text-decoration:line-through;color:#666}
 .ep{display:inline-flex;align-items:center;gap:6px;background:#f0f0f0;padding:4px 10px;border-radius:6px;font-size:.85rem;margin-right:8px}
@@ -176,6 +177,7 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 <div class="fg" style="flex:1"><label class="fl">Dauer (Min.)</label><input type="number" class="finput" id="eventDuration" value="45" min="15" max="480"></div>
 </div>
 <div class="fg"><label class="fl">Typ</label><select class="finput" id="eventType"><option value="event">📅 Termin</option><option value="task">✅ Aufgabe</option></select></div>
+<div class="fg"><label class="fl">Verbindlichkeit</label><select class="finput" id="eventFixity"><option value="flexible">🧩 Variabel</option><option value="fixed">🔒 Fester Termin (nicht verschiebbar)</option></select></div>
 <div class="fg"><label class="fl">Wiederholung</label><select class="finput" id="eventRecurrence"><option value="none">Einmalig</option><option value="daily">Täglich</option><option value="weekly">Wöchentlich</option><option value="monthly">Monatlich</option><option value="workdays">Mo-Fr</option></select></div>
 <div class="fg"><label class="fl">Notiz (optional)</label><textarea class="finput" id="eventNotes" rows="2" placeholder="Zusätzliche Informationen"></textarea></div>
 <div class="da"><button class="btn bs" onclick="closeDialog()">Abbrechen</button><button class="btn bp" onclick="saveEvent()">Speichern</button></div>
@@ -451,6 +453,7 @@ function openAddDialog(event) {
     document.getElementById('eventStartTime').value = event.startTime || '14:00';
     document.getElementById('eventDuration').value = event.durationMinutes || 45;
     document.getElementById('eventType').value = event.isTask ? 'task' : 'event';
+    document.getElementById('eventFixity').value = event.fixity === 'fixed' ? 'fixed' : 'flexible';
     document.getElementById('eventRecurrence').value = event.recurrence || 'none';
     document.getElementById('eventNotes').value = event.notes || '';
   } else {
@@ -463,6 +466,7 @@ function openAddDialog(event) {
     document.getElementById('eventStartTime').value = '14:00';
     document.getElementById('eventDuration').value = 45;
     document.getElementById('eventType').value = 'event';
+    document.getElementById('eventFixity').value = 'flexible';
     document.getElementById('eventRecurrence').value = 'none';
     document.getElementById('eventNotes').value = '';
   }
@@ -487,6 +491,7 @@ function saveEvent() {
   const duration = parseInt(document.getElementById('eventDuration').value) || 45;
   const type = document.getElementById('eventType').value;
   const recurrence = document.getElementById('eventRecurrence').value;
+  const fixity = document.getElementById('eventFixity').value;
   const notes = document.getElementById('eventNotes').value.trim();
 
   if (!title) { alert('Bitte geben Sie einen Titel ein'); return; }
@@ -502,6 +507,7 @@ function saveEvent() {
     durationMinutes: duration,
     isTask: type === 'task',
     recurrence: recurrence !== 'none' ? recurrence : null,
+    fixity: fixity === 'fixed' ? 'fixed' : 'flexible',
     notes: notes,
     isCompleted: existing ? existing.isCompleted : false,
     createdAt: existing ? existing.createdAt : new Date().toISOString(),
@@ -651,6 +657,7 @@ function eventCardHTML(event) {
     '<div class="eh"><span class="et">' + formatTime(event.startTime) + ' - ' + endTimeOf(event) + ' (' + formatDuration(event.durationMinutes || 45) + ')</span><div class="eb">' +
     (event.recurrence ? '<span class="b recurring">🔄 ' + getRecurrenceLabel(event.recurrence) + '</span>' : '') +
     (event.isTask ? '<span class="b task">✅ Aufgabe</span>' : '') +
+    (event.fixity === 'fixed' ? '<span class="b fixed">🔒 Fest</span>' : '') +
     '</div></div>' +
     '<div class="etl">' + esc(event.title) + '</div>' +
     '<div style="margin-top:8px"><span class="ep">' + esc(p.emoji) + ' ' + esc(p.name) + '</span></div>' +
