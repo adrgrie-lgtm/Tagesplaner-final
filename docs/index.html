@@ -414,6 +414,18 @@ function renderFamilyMembers() {
     const card = document.createElement('div');
     card.className = 'ec';
     card.innerHTML = '<div class="eh"><span class="et">' + esc(member.emoji) + ' ' + esc(member.name) + '</span><span class="b" style="background:' + (member.color || '#6200ee') + ';color:white">' + esc(member.role) + '</span></div><div class="etl">' + esc(member.name) + '</div>';
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;gap:8px;margin-top:12px;flex-wrap:wrap';
+    const editBtn = document.createElement('button');
+    editBtn.className = 'bi';
+    editBtn.textContent = '✏️ Bearbeiten';
+    editBtn.onclick = function () { editMember(member.id); };
+    const delBtn = document.createElement('button');
+    delBtn.className = 'bi delete';
+    delBtn.textContent = '🗑️ Entfernen';
+    delBtn.onclick = function () { if (confirm(member.name + ' wirklich entfernen?')) deleteMember(member.id); };
+    actions.appendChild(editBtn); actions.appendChild(delBtn);
+    card.appendChild(actions);
     container.appendChild(card);
   });
   const box = document.getElementById('inviteBox');
@@ -440,6 +452,26 @@ function renderFamilyMembers() {
     };
     container.appendChild(addBtn);
   }
+}
+
+function editMember(id) {
+  const member = members.find(function (m) { return m.id === id; });
+  if (!member) return;
+  const name = prompt('Name:', member.name); if (name === null) return;
+  const role = prompt('Rolle (z.B. Mama, Papa, Kind, Sonstiges):', member.role || 'Sonstiges'); if (role === null) return;
+  const emoji = prompt('Emoji:', member.emoji || '👩'); if (emoji === null) return;
+  member.name = name.trim() || member.name;
+  member.role = role.trim() || member.role;
+  member.emoji = emoji.trim() || member.emoji;
+  member.color = getColorForRole(member.role);
+  member.updatedAt = new Date().toISOString();
+  saveLocalState(); updatePersonSelect(); renderFamilyMembers();
+  if (isSynced()) memCol(family.inviteCode).doc(member.id).set(member).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
+}
+function deleteMember(id) {
+  members = members.filter(function (m) { return m.id !== id; });
+  saveLocalState(); updatePersonSelect(); renderFamilyMembers();
+  if (isSynced()) memCol(family.inviteCode).doc(id).delete().catch(function (err) { alert('Sync-Fehler: ' + err.message); });
 }
 
 function copyInviteCode() {
@@ -601,7 +633,7 @@ function toggleSuggestions() {
 }
 function renderSuggestions() {
   const box = document.getElementById('shopSuggestions');
-  let html = '<div class="ib" style="display:block"><div class="ibl" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span>💡 Vorschläge – antipfen zum Übernehmen</span><button class="bi" onclick="toggleSuggestionEditMode()">' + (suggestionsEditable ? '✓ Fertig' : '⚙️ Bearbeiten') + '</button></div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+  let html = '<div class="ib" style="display:block"><div class="ibl" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span>💡 Vorschläge – antippen zum Übernehmen</span><button class="bi" onclick="toggleSuggestionEditMode()">' + (suggestionsEditable ? '✓ Fertig' : '⚙️ Bearbeiten') + '</button></div><div style="display:flex;flex-wrap:wrap;gap:8px">';
   SHOP_SUGGESTIONS.forEach(function (s) {
     html += '<span class="bi" style="display:inline-flex;align-items:center;gap:8px"><span onclick="addFromSuggestion(\'' + q(s) + '\')" style="cursor:pointer">' + esc(s) + '</span>' + (suggestionsEditable ? '<span onclick="removeSuggestion(\'' + q(s) + '\')" title="Aus Vorschlägen entfernen" style="cursor:pointer;font-weight:700;color:#c62828">✕</span>' : '') + '</span>';
   });
