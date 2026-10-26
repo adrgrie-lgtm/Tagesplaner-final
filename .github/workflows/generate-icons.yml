@@ -2,7 +2,8 @@ name: PNG-Icons generieren
 
 on:
   push:
-    paths: ['docs/icon.svg']
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   convert:
