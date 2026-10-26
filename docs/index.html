@@ -583,19 +583,37 @@ function confirmDelete() {
 }
 
 // ================= EINKAUFSLISTE =================
-const SHOP_SUGGESTIONS = ['Butter','Milch','Brot','Eier','Käse','Joghurt','Zucker','Mehl','Kaffee','Tee','Öl','Salz','Pfeffer','Nudeln','Reis','Kartoffeln','Zwiebeln','Knoblauch','Tomaten','Gurke','Äpfel','Bananen','Orangensaft','Mineralwasser','Toilettenpapier','Küchenrolle','Spülmittel','Waschmittel','Zahnpasta','Duschgel','Shampoo','Tierfutter'];
+let SHOP_SUGGESTIONS = ['Butter','Milch','Brot','Eier','Käse','Joghurt','Zucker','Mehl','Kaffee','Tee','Öl','Salz','Pfeffer','Nudeln','Reis','Kartoffeln','Zwiebeln','Knoblauch','Tomaten','Gurke','Äpfel','Bananen','Orangensaft','Mineralwasser','Toilettenpapier','Küchenrolle','Spülmittel','Waschmittel','Zahnpasta','Duschgel','Shampoo','Tierfutter'];
 
+function q(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
 function toggleSuggestions() {
   const box = document.getElementById('shopSuggestions');
-  if (box.style.display === 'none') {
-    let html = '<div class="ib" style="display:block"><div class="ibl" style="margin-bottom:12px">💡 Häufige Einkäufe – antippen zum Übernehmen:</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
-    SHOP_SUGGESTIONS.forEach(function (s) {
-      html += '<button class="bi" onclick="addFromSuggestion(\'' + s + '\')">' + esc(s) + '</button>';
-    });
-    html += '</div></div>';
-    box.innerHTML = html;
-    box.style.display = 'block';
-  } else { box.style.display = 'none'; }
+  if (box.style.display === 'none') { renderSuggestions(); box.style.display = 'block'; }
+  else { box.style.display = 'none'; }
+}
+function renderSuggestions() {
+  const box = document.getElementById('shopSuggestions');
+  let html = '<div class="ib" style="display:block"><div class="ibl" style="margin-bottom:12px">💡 Vorschläge – antippen zum Übernehmen, ✕ entfernt aus der Liste:</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+  SHOP_SUGGESTIONS.forEach(function (s) {
+    html += '<span class="bi" style="display:inline-flex;align-items:center;gap:8px"><span onclick="addFromSuggestion(\'' + q(s) + '\')" style="cursor:pointer">' + esc(s) + '</span><span onclick="removeSuggestion(\'' + q(s) + '\')" title="Aus Vorschlägen entfernen" style="cursor:pointer;font-weight:700;color:#c62828">✕</span></span>';
+  });
+  html += '</div>';
+  html += '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><input type="text" class="finput" id="newSuggestion" placeholder="Eigener Vorschlag" onkeydown="if(event.key===\'Enter\')addSuggestion()" style="flex:1;min-width:140px"><button class="btn bp" onclick="addSuggestion()" style="white-space:nowrap">+ Vorschlag</button></div>';
+  html += '<div class="ihint" style="margin-top:10px">Änderungen an der Vorschlagsliste sind temporär – nach einem Neuladen ist wieder die Standard-Liste da.</div></div>';
+  box.innerHTML = html;
+}
+function addSuggestion() {
+  const input = document.getElementById('newSuggestion');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!SHOP_SUGGESTIONS.some(function (s) { return s.toLowerCase() === text.toLowerCase(); })) SHOP_SUGGESTIONS.push(text);
+  renderSuggestions();
+  const neu = document.getElementById('newSuggestion');
+  if (neu) neu.focus();
+}
+function removeSuggestion(name) {
+  SHOP_SUGGESTIONS = SHOP_SUGGESTIONS.filter(function (s) { return s !== name; });
+  renderSuggestions();
 }
 
 function addFromSuggestion(name) { addShopItemText(name); }
