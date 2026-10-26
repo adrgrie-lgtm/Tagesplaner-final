@@ -584,6 +584,12 @@ function confirmDelete() {
 
 // ================= EINKAUFSLISTE =================
 let SHOP_SUGGESTIONS = ['Butter','Milch','Brot','Eier','Käse','Joghurt','Zucker','Mehl','Kaffee','Tee','Öl','Salz','Pfeffer','Nudeln','Reis','Kartoffeln','Zwiebeln','Knoblauch','Tomaten','Gurke','Äpfel','Bananen','Orangensaft','Mineralwasser','Toilettenpapier','Küchenrolle','Spülmittel','Waschmittel','Zahnpasta','Duschgel','Shampoo','Tierfutter'];
+(function () {
+  try {
+    const gespeichert = JSON.parse(localStorage.getItem('familienplaner_suggestions'));
+    if (Array.isArray(gespeichert)) SHOP_SUGGESTIONS = gespeichert;
+  } catch (e) { }
+})();
 
 function q(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
 function toggleSuggestions() {
@@ -599,7 +605,7 @@ function renderSuggestions() {
   });
   html += '</div>';
   html += '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><input type="text" class="finput" id="newSuggestion" placeholder="Eigener Vorschlag" onkeydown="if(event.key===\'Enter\')addSuggestion()" style="flex:1;min-width:140px"><button class="btn bp" onclick="addSuggestion()" style="white-space:nowrap">+ Vorschlag</button></div>';
-  html += '<div class="ihint" style="margin-top:10px">Änderungen an der Vorschlagsliste sind temporär – nach einem Neuladen ist wieder die Standard-Liste da.</div></div>';
+  html += '<div class="ihint" style="margin-top:10px">Ihre Änderungen werden auf diesem Gerät dauerhaft gespeichert.</div></div>';
   box.innerHTML = html;
 }
 function addSuggestion() {
@@ -607,12 +613,14 @@ function addSuggestion() {
   const text = input.value.trim();
   if (!text) return;
   if (!SHOP_SUGGESTIONS.some(function (s) { return s.toLowerCase() === text.toLowerCase(); })) SHOP_SUGGESTIONS.push(text);
+  localStorage.setItem('familienplaner_suggestions', JSON.stringify(SHOP_SUGGESTIONS));
   renderSuggestions();
   const neu = document.getElementById('newSuggestion');
   if (neu) neu.focus();
 }
 function removeSuggestion(name) {
   SHOP_SUGGESTIONS = SHOP_SUGGESTIONS.filter(function (s) { return s !== name; });
+  localStorage.setItem('familienplaner_suggestions', JSON.stringify(SHOP_SUGGESTIONS));
   renderSuggestions();
 }
 
