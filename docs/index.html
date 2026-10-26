@@ -592,6 +592,8 @@ let SHOP_SUGGESTIONS = ['Butter','Milch','Brot','Eier','Käse','Joghurt','Zucker
 })();
 
 function q(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+let suggestionsEditable = false;
+function toggleSuggestionEditMode() { suggestionsEditable = !suggestionsEditable; renderSuggestions(); }
 function toggleSuggestions() {
   const box = document.getElementById('shopSuggestions');
   if (box.style.display === 'none') { renderSuggestions(); box.style.display = 'block'; }
@@ -599,13 +601,13 @@ function toggleSuggestions() {
 }
 function renderSuggestions() {
   const box = document.getElementById('shopSuggestions');
-  let html = '<div class="ib" style="display:block"><div class="ibl" style="margin-bottom:12px">💡 Vorschläge – antippen zum Übernehmen, ✕ entfernt aus der Liste:</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+  let html = '<div class="ib" style="display:block"><div class="ibl" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span>💡 Vorschläge – antipfen zum Übernehmen</span><button class="bi" onclick="toggleSuggestionEditMode()">' + (suggestionsEditable ? '✓ Fertig' : '⚙️ Bearbeiten') + '</button></div><div style="display:flex;flex-wrap:wrap;gap:8px">';
   SHOP_SUGGESTIONS.forEach(function (s) {
-    html += '<span class="bi" style="display:inline-flex;align-items:center;gap:8px"><span onclick="addFromSuggestion(\'' + q(s) + '\')" style="cursor:pointer">' + esc(s) + '</span><span onclick="removeSuggestion(\'' + q(s) + '\')" title="Aus Vorschlägen entfernen" style="cursor:pointer;font-weight:700;color:#c62828">✕</span></span>';
+    html += '<span class="bi" style="display:inline-flex;align-items:center;gap:8px"><span onclick="addFromSuggestion(\'' + q(s) + '\')" style="cursor:pointer">' + esc(s) + '</span>' + (suggestionsEditable ? '<span onclick="removeSuggestion(\'' + q(s) + '\')" title="Aus Vorschlägen entfernen" style="cursor:pointer;font-weight:700;color:#c62828">✕</span>' : '') + '</span>';
   });
   html += '</div>';
   html += '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><input type="text" class="finput" id="newSuggestion" placeholder="Eigener Vorschlag" onkeydown="if(event.key===\'Enter\')addSuggestion()" style="flex:1;min-width:140px"><button class="btn bp" onclick="addSuggestion()" style="white-space:nowrap">+ Vorschlag</button></div>';
-  html += '<div class="ihint" style="margin-top:10px">Ihre Änderungen werden auf diesem Gerät dauerhaft gespeichert.</div></div>';
+  html += '<div class="ihint" style="margin-top:10px">Zum Entfernen oder Hinzufügen von Vorschlägen: „⚙️ Bearbeiten“ antippen. Änderungen werden auf diesem Gerät dauerhaft gespeichert.</div></div>';
   box.innerHTML = html;
 }
 function addSuggestion() {
