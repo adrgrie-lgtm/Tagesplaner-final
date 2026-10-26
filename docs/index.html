@@ -117,6 +117,7 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 <button class="ntb active" onclick="switchTab('today')">Heute</button>
 <button class="ntb" onclick="switchTab('week')">Woche</button>
 <button class="ntb" onclick="switchTab('schedule')">Übersicht</button>
+<button class="ntb" onclick="switchTab('shopping')">🛒 Einkauf</button>
 <button class="ntb" onclick="switchTab('family')">Familie</button>
 </div>
 
@@ -142,6 +143,17 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 <div class="sc"><div class="sv" id="recurringCount">0</div><div class="sl">Wiederkehrend</div></div>
 </div>
 <div class="es"><div class="el" id="allEvents"></div></div>
+</div>
+
+<div id="shopping" class="wv">
+<div class="wh"><h2 class="wt">🛒 Einkaufsliste</h2><p class="ws">Einfach aufschreiben – beim Einkauf abhaken ✓</p></div>
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+<input type="text" class="finput" id="newShopItem" placeholder="Was brauchen wir?" onkeydown="if(event.key==='Enter')addShopItem()" style="flex:1;min-width:180px">
+<button class="btn bp" onclick="addShopItem()" style="white-space:nowrap">+ Hinzufügen</button>
+<button class="btn bs" onclick="toggleSuggestions()" style="white-space:nowrap">💡 Vorschläge</button>
+</div>
+<div id="shopSuggestions" style="display:none;margin-bottom:20px"></div>
+<div class="el" id="shopList"></div>
 </div>
 
 <div id="family" class="wv">
@@ -235,7 +247,8 @@ let events = [];
 let family = null;
 let members = [];
 let db = null;
-let unsubMembers = null, unsubEvents = null;
+let unsubMembers = null, unsubEvents = null, unsubShopping = null;
+let shopping = [];
 let currentDate = new Date().toISOString().split('T')[0];
 let selectedDate = currentDate;
 let editingEventId = null;
@@ -248,17 +261,20 @@ function loadLocal() {
   try { events = JSON.parse(localStorage.getItem('familienplaner_events')) || []; } catch (e) { events = []; }
   try { family = JSON.parse(localStorage.getItem('familienplaner_family')) || null; } catch (e) { family = null; }
   try { members = JSON.parse(localStorage.getItem('familienplaner_members')) || []; } catch (e) { members = []; }
+  try { shopping = JSON.parse(localStorage.getItem('familienplaner_shopping')) || []; } catch (e) { shopping = []; }
 }
 function saveLocalState() {
   localStorage.setItem('familienplaner_events', JSON.stringify(events));
   localStorage.setItem('familienplaner_family', JSON.stringify(family));
   localStorage.setItem('familienplaner_members', JSON.stringify(members));
+  localStorage.setItem('familienplaner_shopping', JSON.stringify(shopping));
 }
 function setSync(text) { document.getElementById('syncText').textContent = text; }
 function isSynced() { return !!(SYNC_ENABLED && db && family && family.inviteCode); }
 function famDoc(code) { return db.collection('families').doc(code); }
 function evCol(code) { return famDoc(code).collection('events'); }
 function memCol(code) { return famDoc(code).collection('members'); }
+function shopCol(code) { return famDoc(code).collection('shopping'); }
 
 // ================= FIREBASE =================
 async function initSync() {
@@ -291,6 +307,11 @@ function subscribeAll(code) {
     renderAllTabs(); updateDaySelector();
     setSync('Synchronisiert 🔗');
   }, function () { setSync('Offline – zeige lokalen Stand'); });
+  if (unsubShopping) unsubShopping();
+  unsubShopping = shopCol(code).onSnapshot(function (snap) {
+    shopping = snap.docs.map(function (d) { return d.data(); });
+    saveLocalState(); renderShopping();
+  }, function () { });
 }
 
 // ================= FAMILIE =================
@@ -561,6 +582,101 @@ function confirmDelete() {
   closeDeleteDialog();
 }
 
+// ================= EINKAUFSLISTE =================
+const SHOP_SUGGESTIONS = ['Butter','Milch','Brot','Eier','Käse','Joghurt','Zucker','Mehl','Kaffee','Tee','Öl','Salz','Pfeffer','Nudeln','Reis','Kartoffeln','Zwiebeln','Knoblauch','Tomaten','Gurke','Äpfel','Bananen','Orangensaft','Mineralwasser','Toilettenpapier','Küchenrolle','Spülmittel','Waschmittel','Zahnpasta','Duschgel','Shampoo','Tierfutter'];
+
+function toggleSuggestions() {
+  const box = document.getElementById('shopSuggestions');
+  if (box.style.display === 'none') {
+    let html = '<div class="ib" style="display:block"><div class="ibl" style="margin-bottom:12px">💡 Häufige Einkäufe – antippen zum Übernehmen:</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+    SHOP_SUGGESTIONS.forEach(function (s) {
+      html += '<button class="bi" onclick="addFromSuggestion(\'' + s + '\')">' + esc(s) + '</button>';
+    });
+    html += '</div></div>';
+    box.innerHTML = html;
+    box.style.display = 'block';
+  } else { box.style.display = 'none'; }
+}
+
+function addFromSuggestion(name) { addShopItemText(name); }
+
+function addShopItem() {
+  const input = document.getElementById('newShopItem');
+  const text = input.value.trim();
+  if (!text) return;
+  addShopItemText(text);
+  input.value = '';
+}
+
+function addShopItemText(text) {
+  const schonDrauf = shopping.some(function (i) { return i.name.toLowerCase() === text.toLowerCase() && !i.done; });
+  if (schonDrauf) return;
+  const item = { id: randId('shop'), name: text, done: false, createdAt: new Date().toISOString() };
+  if (isSynced()) {
+    shopCol(family.inviteCode).doc(item.id).set(item).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
+  } else {
+    shopping.push(item);
+    saveLocalState(); renderShopping();
+  }
+}
+
+function toggleShopItem(id) {
+  const item = shopping.find(function (i) { return i.id === id; });
+  if (!item) return;
+  item.done = !item.done;
+  if (isSynced()) {
+    shopCol(family.inviteCode).doc(item.id).set(item).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
+  } else { saveLocalState(); renderShopping(); }
+}
+
+function deleteShopItem(id) {
+  if (isSynced()) {
+    shopCol(family.inviteCode).doc(id).delete().catch(function (err) { alert('Sync-Fehler: ' + err.message); });
+  } else {
+    shopping = shopping.filter(function (i) { return i.id !== id; });
+    saveLocalState(); renderShopping();
+  }
+}
+
+function clearDoneShopItems() {
+  const doneItems = shopping.filter(function (i) { return i.done; });
+  if (doneItems.length === 0) return;
+  if (isSynced()) {
+    doneItems.forEach(function (i) { shopCol(family.inviteCode).doc(i.id).delete().catch(function () { }); });
+  } else {
+    shopping = shopping.filter(function (i) { return !i.done; });
+    saveLocalState(); renderShopping();
+  }
+}
+
+function renderShopping() {
+  const container = document.getElementById('shopList');
+  if (!container) return;
+  const open = shopping.filter(function (i) { return !i.done; });
+  const done = shopping.filter(function (i) { return i.done; });
+  if (shopping.length === 0) {
+    container.innerHTML = '<div class="es" style="text-align:center;padding:40px 20px"><div class="esi">🛒</div><h3>Die Liste ist leer</h3><p>Tragen Sie oben ein, was Sie brauchen – oder tippen Sie auf 💡 Vorschläge</p></div>';
+    return;
+  }
+  let html = '';
+  open.forEach(function (i) {
+    html += '<div class="ec" style="display:flex;align-items:center;gap:12px;padding:12px 16px">' +
+      '<button class="bi" style="font-size:1.2rem;padding:4px 12px" onclick="toggleShopItem(\'' + i.id + '\')">☐</button>' +
+      '<span style="flex:1;font-size:1.05rem;font-weight:500">' + esc(i.name) + '</span>' +
+      '<button class="bi delete" onclick="deleteShopItem(\'' + i.id + '\')">🗑️</button></div>';
+  });
+  if (done.length > 0) {
+    html += '<div class="sh" style="margin-top:20px"><span class="st">✓ Im Korb (' + done.length + ')</span><button class="bi" onclick="clearDoneShopItems()">Entfernen</button></div>';
+    done.forEach(function (i) {
+      html += '<div class="ec completed" style="display:flex;align-items:center;gap:12px;padding:12px 16px">' +
+        '<button class="bi complete" style="font-size:1.2rem;padding:4px 12px" onclick="toggleShopItem(\'' + i.id + '\')">☑</button>' +
+        '<span style="flex:1;font-size:1.05rem;text-decoration:line-through;color:#666">' + esc(i.name) + '</span>' +
+        '<button class="bi delete" onclick="deleteShopItem(\'' + i.id + '\')">🗑️</button></div>';
+    });
+  }
+  container.innerHTML = html;
+}
+
 // ================= TABS & RENDERING =================
 function switchTab(tabName) {
   document.querySelectorAll('.ntb').forEach(function (tab) { tab.classList.remove('active'); });
@@ -572,6 +688,7 @@ function switchTab(tabName) {
     case 'week': renderWeek(); break;
     case 'schedule': renderSchedule(); break;
     case 'family': updateFamilyUI(); break;
+    case 'shopping': renderShopping(); break;
   }
 }
 
