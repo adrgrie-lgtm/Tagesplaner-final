@@ -1,0 +1,26 @@
+name: PNG-Icons generieren
+
+on:
+  push:
+    paths: ['docs/icon.svg']
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: rsvg-convert installieren
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+      - name: SVG in PNG umwandeln
+        run: |
+          rsvg-convert -w 512 -h 512 docs/icon.svg -o docs/icon-512.png
+          rsvg-convert -w 192 -h 192 docs/icon.svg -o docs/icon-192.png
+      - name: PNGs einchecken
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/icon-512.png docs/icon-192.png
+          git commit -m "PNG-Icons aus icon.svg generiert" || echo "Keine Änderungen"
+          git push
