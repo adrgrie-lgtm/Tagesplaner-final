@@ -1,5 +1,5 @@
-const CACHE = 'tagesplaner-v10';
-const SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
+const CACHE = 'tagesplaner-v11';
+const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './icon-512.png', './icon-192.png'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
