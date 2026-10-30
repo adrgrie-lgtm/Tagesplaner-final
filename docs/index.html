@@ -118,6 +118,7 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 <button class="ntb" onclick="switchTab('week')">Woche</button>
 <button class="ntb" onclick="switchTab('schedule')">Übersicht</button>
 <button class="ntb" onclick="switchTab('shopping')">🛒 Einkauf</button>
+<button class="ntb" onclick="switchTab('todos')">✅ To-dos</button>
 <button class="ntb" onclick="switchTab('family')">Familie</button>
 </div>
 
@@ -154,6 +155,16 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 </div>
 <div id="shopSuggestions" style="display:none;margin-bottom:20px"></div>
 <div class="el" id="shopList"></div>
+</div>
+
+<div id="todos" class="wv">
+<div class="wh"><h2 class="wt">✅ To-do-Liste</h2><p class="ws">Was zu tun ist – abhaken, wenn erledigt ✓</p></div>
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+<input type="text" class="finput" id="newTodoItem" placeholder="Was ist zu tun?" onkeydown="if(event.key==='Enter')addTodoItem()" style="flex:1;min-width:180px">
+<select class="finput" id="todoPerson" style="max-width:170px"><option value="family">👨‍👩‍👧‍👦 Alle</option></select>
+<button class="btn bp" onclick="addTodoItem()" style="white-space:nowrap">+ Hinzufügen</button>
+</div>
+<div class="el" id="todoList"></div>
 </div>
 
 <div id="family" class="wv">
@@ -247,8 +258,9 @@ let events = [];
 let family = null;
 let members = [];
 let db = null;
-let unsubMembers = null, unsubEvents = null, unsubShopping = null;
+let unsubMembers = null, unsubEvents = null, unsubShopping = null, unsubTodos = null;
 let shopping = [];
+let todos = [];
 let currentDate = new Date().toISOString().split('T')[0];
 let selectedDate = currentDate;
 let editingEventId = null;
@@ -262,12 +274,14 @@ function loadLocal() {
   try { family = JSON.parse(localStorage.getItem('familienplaner_family')) || null; } catch (e) { family = null; }
   try { members = JSON.parse(localStorage.getItem('familienplaner_members')) || []; } catch (e) { members = []; }
   try { shopping = JSON.parse(localStorage.getItem('familienplaner_shopping')) || []; } catch (e) { shopping = []; }
+  try { todos = JSON.parse(localStorage.getItem('familienplaner_todos')) || []; } catch (e) { todos = []; }
 }
 function saveLocalState() {
   localStorage.setItem('familienplaner_events', JSON.stringify(events));
   localStorage.setItem('familienplaner_family', JSON.stringify(family));
   localStorage.setItem('familienplaner_members', JSON.stringify(members));
   localStorage.setItem('familienplaner_shopping', JSON.stringify(shopping));
+  localStorage.setItem('familienplaner_todos', JSON.stringify(todos));
 }
 function setSync(text) { document.getElementById('syncText').textContent = text; }
 function isSynced() { return !!(SYNC_ENABLED && db && family && family.inviteCode); }
@@ -275,6 +289,7 @@ function famDoc(code) { return db.collection('families').doc(code); }
 function evCol(code) { return famDoc(code).collection('events'); }
 function memCol(code) { return famDoc(code).collection('members'); }
 function shopCol(code) { return famDoc(code).collection('shopping'); }
+function todoCol(code) { return famDoc(code).collection('todos'); }
 
 // ================= FIREBASE =================
 async function initSync() {
@@ -311,6 +326,11 @@ function subscribeAll(code) {
   unsubShopping = shopCol(code).onSnapshot(function (snap) {
     shopping = snap.docs.map(function (d) { return d.data(); });
     saveLocalState(); renderShopping();
+  }, function () { });
+  if (unsubTodos) unsubTodos();
+  unsubTodos = todoCol(code).onSnapshot(function (snap) {
+    todos = snap.docs.map(function (d) { return d.data(); });
+    saveLocalState(); renderTodos();
   }, function () { });
 }
 
@@ -737,6 +757,67 @@ function renderShopping() {
   container.innerHTML = html;
 }
 
+// ================= TO-DO-LISTE =================
+function addTodoItem() {
+  const input = document.getElementById('newTodoItem');
+  const text = input.value.trim();
+  if (!text) return;
+  const sel = document.getElementById('todoPerson');
+  const item = { id: randId('todo'), name: text, personId: sel ? sel.value : 'family', done: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  input.value = '';
+  if (isSynced()) {
+    todoCol(family.inviteCode).doc(item.id).set(item).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
+  } else { todos.push(item); saveLocalState(); renderTodos(); }
+}
+function toggleTodoItem(id) {
+  const item = todos.find(function (i) { return i.id === id; });
+  if (!item) return;
+  item.done = !item.done; item.updatedAt = new Date().toISOString();
+  if (isSynced()) { todoCol(family.inviteCode).doc(item.id).set(item).catch(function (err) { alert('Sync-Fehler: ' + err.message); }); }
+  else { saveLocalState(); renderTodos(); }
+}
+function deleteTodoItem(id) {
+  if (isSynced()) { todoCol(family.inviteCode).doc(id).delete().catch(function (err) { alert('Sync-Fehler: ' + err.message); }); }
+  else { todos = todos.filter(function (i) { return i.id !== id; }); saveLocalState(); renderTodos(); }
+}
+function clearDoneTodos() {
+  const doneItems = todos.filter(function (i) { return i.done; });
+  if (doneItems.length === 0) return;
+  if (isSynced()) { doneItems.forEach(function (i) { todoCol(family.inviteCode).doc(i.id).delete().catch(function () { }); }); }
+  else { todos = todos.filter(function (i) { return !i.done; }); saveLocalState(); renderTodos(); }
+}
+function renderTodos() {
+  const container = document.getElementById('todoList');
+  if (!container) return;
+  if (todos.length === 0) {
+    container.innerHTML = '<div class="es" style="text-align:center;padding:40px 20px"><div class="esi">✅</div><h3>Keine To-dos</h3><p>Tragen Sie oben ein, was zu tun ist</p></div>';
+    return;
+  }
+  const open = todos.filter(function (i) { return !i.done; });
+  const done = todos.filter(function (i) { return i.done; });
+  let html = '';
+  open.forEach(function (i) {
+    const p = personLabel(i.personId);
+    html += '<div class="ec" style="display:flex;align-items:center;gap:12px;padding:12px 16px">' +
+      '<button class="bi" style="font-size:1.2rem;padding:4px 12px" onclick="toggleTodoItem(\'' + i.id + '\')">☐</button>' +
+      '<span style="flex:1;font-size:1.05rem;font-weight:500">' + esc(i.name) + '</span>' +
+      '<span class="ep">' + esc(p.emoji) + ' ' + esc(p.name) + '</span>' +
+      '<button class="bi delete" onclick="deleteTodoItem(\'' + i.id + '\')">🗑️</button></div>';
+  });
+  if (done.length > 0) {
+    html += '<div class="sh" style="margin-top:20px"><span class="st">✓ Erledigt (' + done.length + ')</span><button class="bi" onclick="clearDoneTodos()">Entfernen</button></div>';
+    done.forEach(function (i) {
+      const p = personLabel(i.personId);
+      html += '<div class="ec completed" style="display:flex;align-items:center;gap:12px;padding:12px 16px">' +
+        '<button class="bi complete" style="font-size:1.2rem;padding:4px 12px" onclick="toggleTodoItem(\'' + i.id + '\')">☑</button>' +
+        '<span style="flex:1;font-size:1.05rem;text-decoration:line-through;color:#666">' + esc(i.name) + '</span>' +
+        '<span class="ep">' + esc(p.emoji) + ' ' + esc(p.name) + '</span>' +
+        '<button class="bi delete" onclick="deleteTodoItem(\'' + i.id + '\')">🗑️</button></div>';
+    });
+  }
+  container.innerHTML = html;
+}
+
 // ================= TABS & RENDERING =================
 function switchTab(tabName) {
   document.querySelectorAll('.ntb').forEach(function (tab) { tab.classList.remove('active'); });
@@ -749,6 +830,7 @@ function switchTab(tabName) {
     case 'schedule': renderSchedule(); break;
     case 'family': updateFamilyUI(); break;
     case 'shopping': renderShopping(); break;
+    case 'todos': renderTodos(); break;
   }
 }
 
@@ -935,6 +1017,20 @@ function updatePersonSelect() {
     option.textContent = member.emoji + ' ' + member.name;
     select.appendChild(option);
   });
+  const todoSelect = document.getElementById('todoPerson');
+  if (todoSelect) {
+    todoSelect.innerHTML = '';
+    const famOpt = document.createElement('option');
+    famOpt.value = 'family';
+    famOpt.textContent = '👨‍👩‍👧‍👦 Alle';
+    todoSelect.appendChild(famOpt);
+    members.forEach(function (member) {
+      const o = document.createElement('option');
+      o.value = member.id;
+      o.textContent = member.emoji + ' ' + member.name;
+      todoSelect.appendChild(o);
+    });
+  }
 }
 
 // ================= START =================
