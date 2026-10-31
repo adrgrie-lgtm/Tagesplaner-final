@@ -331,7 +331,7 @@ function subscribeAll(code) {
   unsubTodos = todoCol(code).onSnapshot(function (snap) {
     todos = snap.docs.map(function (d) { return d.data(); });
     saveLocalState(); renderTodos();
-  }, function () { });
+  }, function (err) { console.warn('To-do-Sync-Fehler:', err); });
 }
 
 // ================= FAMILIE =================
@@ -766,7 +766,10 @@ function addTodoItem() {
   const item = { id: randId('todo'), name: text, personId: sel ? sel.value : 'family', done: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
   input.value = '';
   if (isSynced()) {
-    todoCol(family.inviteCode).doc(item.id).set(item).catch(function (err) { alert('Sync-Fehler: ' + err.message); });
+    todoCol(family.inviteCode).doc(item.id).set(item).catch(function (err) {
+      todos.push(item); saveLocalState(); renderTodos();
+      alert('To-do wurde lokal gespeichert, aber NICHT synchronisiert.\n\nFehler: ' + err.message + '\n\nWahrscheinlich müssen in den Firebase-Sicherheitsregeln die To-dos freigegeben werden.');
+    });
   } else { todos.push(item); saveLocalState(); renderTodos(); }
 }
 function toggleTodoItem(id) {
