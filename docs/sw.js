@@ -1,4 +1,4 @@
-const CACHE = 'tagesplaner-v15';
+const CACHE = 'tagesplaner-v16';
 const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './icon-512.png', './icon-192.png'];
 
 self.addEventListener('install', function (e) {
