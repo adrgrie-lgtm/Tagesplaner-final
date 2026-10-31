@@ -463,7 +463,7 @@ function renderFamilyMembers() {
     addBtn.onclick = function () {
       const name = prompt('Name des neuen Mitglieds:');
       if (!name) return;
-      const role = prompt('Rolle:', 'Kind') || 'Kind';
+      const role = prompt('Rolle (Mama, Papa, Eltern, Kind, Sonstiges):', 'Kind') || 'Kind';
       const emoji = prompt('Emoji:', '👧') || '👧';
       const member = { id: randId('mem'), name: name, role: role, emoji: emoji, color: getColorForRole(role), createdAt: new Date().toISOString() };
       members.push(member);
@@ -478,7 +478,7 @@ function editMember(id) {
   const member = members.find(function (m) { return m.id === id; });
   if (!member) return;
   const name = prompt('Name:', member.name); if (name === null) return;
-  const role = prompt('Rolle (z.B. Mama, Papa, Kind, Sonstiges):', member.role || 'Sonstiges'); if (role === null) return;
+  const role = prompt('Rolle (z.B. Mama, Papa, Eltern, Kind, Sonstiges):', member.role || 'Sonstiges'); if (role === null) return;
   const emoji = prompt('Emoji:', member.emoji || '👩'); if (emoji === null) return;
   member.name = name.trim() || member.name;
   member.role = role.trim() || member.role;
@@ -511,7 +511,7 @@ function generateInviteCode() {
 }
 
 function getColorForRole(role) {
-  const colors = { 'Mama': '#e91e63', 'Papa': '#2196f3', 'Kind': '#4caf50', 'Sonstiges': '#9c27b0', 'Mitglied': '#6200ee' };
+  const colors = { 'Mama': '#e91e63', 'Papa': '#2196f3', 'Eltern': '#ff9800', 'Kind': '#4caf50', 'Sonstiges': '#9c27b0', 'Mitglied': '#6200ee' };
   return colors[role] || '#6200ee';
 }
 
