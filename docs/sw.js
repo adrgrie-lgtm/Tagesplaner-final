@@ -1,4 +1,4 @@
-const CACHE = 'tagesplaner-v14';
+const CACHE = 'tagesplaner-v15';
 const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './icon-512.png', './icon-192.png'];
 
 self.addEventListener('install', function (e) {
@@ -15,6 +15,19 @@ self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (url.origin === self.origin) {
+    const isPage = e.request.mode === 'navigate' || url.pathname.slice(-10) === 'index.html' || url.pathname === '/Tagesplaner-final/' || url.pathname === '/Tagesplaner-final';
+    if (isPage) {
+      e.respondWith(
+        fetch(e.request).then(function (resp) {
+          const copy = resp.clone();
+          caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+          return resp;
+        }).catch(function () {
+          return caches.match(e.request).then(function (hit) { return hit || caches.match('./index.html'); });
+        })
+      );
+      return;
+    }
     e.respondWith(
       caches.match(e.request).then(function (hit) {
         if (hit) return hit;
