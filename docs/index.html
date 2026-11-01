@@ -261,7 +261,8 @@ let db = null;
 let unsubMembers = null, unsubEvents = null, unsubShopping = null, unsubTodos = null;
 let shopping = [];
 let todos = [];
-let currentDate = new Date().toISOString().split('T')[0];
+function toLocalDateStr(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+let currentDate = toLocalDateStr(new Date());
 let selectedDate = currentDate;
 let editingEventId = null;
 let deleteEventId = null;
@@ -848,11 +849,11 @@ function updateDaySelector() {
     const date = new Date(today);
     date.setDate(date.getDate() + i);
     days.push({
-      date: date.toISOString().split('T')[0],
+      date: toLocalDateStr(date),
       dayName: getDayName(date.getDay()),
       dayNumber: date.getDate(),
       isToday: i === 0,
-      isSelected: date.toISOString().split('T')[0] === selectedDate
+      isSelected: toLocalDateStr(date) === selectedDate
     });
   }
   container.innerHTML = '';
@@ -932,7 +933,7 @@ function eventCardHTML(event) {
 }
 
 function renderToday() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   const activeDate = selectedDate || today;
   const todayEvents = events.filter(function (e) { return e.date === activeDate; });
   document.getElementById('todayTitle').textContent = formatDate(activeDate);
@@ -955,7 +956,7 @@ function renderWeek() {
   for (let i = 0; i < 7; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() + i);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = toLocalDateStr(date);
     events.filter(function (e) { return e.date === dateStr; }).forEach(function (evt) { weekEvents.push(evt); });
   }
   weekEvents.sort(function (a, b) { return a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || ''); });
