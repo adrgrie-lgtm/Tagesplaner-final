@@ -2,8 +2,12 @@ name: PNG-Icons generieren
 
 on:
   push:
-    branches: [main]
+    paths: ['docs/icon.svg']
   workflow_dispatch:
+
+concurrency:
+  group: generate-icons
+  cancel-in-progress: false
 
 jobs:
   convert:
@@ -23,5 +27,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/icon-512.png docs/icon-192.png
-          git commit -m "PNG-Icons aus icon.svg generiert" || echo "Keine Änderungen"
-          git push
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen - nichts zu committen"
+          else
+            git commit -m "PNG-Icons aus icon.svg generiert"
+            git pull --rebase origin main
+            git push
+          fi
