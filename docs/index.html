@@ -108,9 +108,15 @@ body{background:var(--sf);color:var(--os);min-height:100vh}
 <div class="ha">
 <div class="ss" id="syncStatus"><span class="si"></span><span id="syncText">Lokal (Offline)</span></div>
 <div class="finfo" id="familyInfo"></div>
+<button class="btn bs" style="background:rgba(255,255,255,.2);color:#fff" onclick="enableReminders()" title="Erinnerungen aktivieren">🔔</button>
 <button class="btn bp" onclick="openAddDialog()">+ Neu</button>
 </div>
 </div>
+</div>
+
+<div id="reminderBanner" style="display:none;background:#fff8e1;border-left:4px solid #ff9800;border-radius:12px;padding:14px 18px;margin:16px auto 0;max-width:1160px;box-shadow:0 1px 3px rgba(0,0,0,.1);align-items:center;gap:12px;flex-wrap:wrap">
+<span id="reminderText" style="flex:1;font-weight:600;min-width:200px"></span>
+<button class="bi" onclick="dismissReminder()">✕ Schließen</button>
 </div>
 
 <div class="nt">
@@ -838,7 +844,7 @@ function switchTab(tabName) {
   }
 }
 
-function renderAllTabs() { renderToday(); renderWeek(); renderSchedule(); }
+function renderAllTabs() { renderToday(); renderWeek(); renderSchedule(); checkReminders(); }
 
 function updateDaySelector() {
   const container = document.getElementById('daySelector');
@@ -1035,6 +1041,40 @@ function updatePersonSelect() {
       todoSelect.appendChild(o);
     });
   }
+}
+
+// ================= ERINNERUNGEN =================
+function tomorrowDateStr() { const t = new Date(); t.setDate(t.getDate() + 1); return toLocalDateStr(t); }
+function tomorrowEvents() {
+  const dStr = tomorrowDateStr();
+  return events.filter(function (e) { return e.date === dStr && !e.isCompleted; });
+}
+function checkReminders() {
+  const banner = document.getElementById('reminderBanner');
+  if (!banner) return;
+  const tmr = tomorrowEvents();
+  const dStr = tomorrowDateStr();
+  if (tmr.length === 0 || localStorage.getItem('fp_reminderDismissed') === dStr) { banner.style.display = 'none'; return; }
+  const liste = tmr.map(function (e) { return (e.startTime ? formatTime(e.startTime) + ' ' : '') + e.title; }).join(', ');
+  banner.style.display = 'flex';
+  document.getElementById('reminderText').textContent = '🔔 Erinnerung: Morgen, ' + formatDate(dStr) + ' – ' + (tmr.length === 1 ? '1 Termin' : tmr.length + ' Termine') + ': ' + liste;
+  if ('Notification' in window && Notification.permission === 'granted' && localStorage.getItem('fp_reminderLast') !== dStr) {
+    try {
+      new Notification('🔔 Erinnerung für morgen', { body: liste, icon: 'icon-192.png' });
+      localStorage.setItem('fp_reminderLast', dStr);
+    } catch (e) { }
+  }
+}
+function dismissReminder() {
+  localStorage.setItem('fp_reminderDismissed', tomorrowDateStr());
+  document.getElementById('reminderBanner').style.display = 'none';
+}
+function enableReminders() {
+  if (!('Notification' in window)) { alert('Dieses Gerät unterstützt keine Benachrichtigungen.'); return; }
+  Notification.requestPermission().then(function (p) {
+    if (p === 'granted') { alert('✅ Erinnerungen aktiviert! Sie werden beim Öffnen der App an morgige Termine erinnert.'); checkReminders(); }
+    else { alert('⚠️ Benachrichtigungen nicht erlaubt. Die Erinnerung erscheint dann nur als Banner in der App selbst.'); }
+  });
 }
 
 // ================= START =================
