@@ -5,10 +5,10 @@ on:
     - cron: '30 17 * * *'
   workflow_dispatch:
   push:
-    paths: ['docs/push-setup-trigger.txt']
+    branches: [main]
 
 concurrency:
-  group: push-reminder
+  group: push-reminder-v2
 
 jobs:
   remind:
