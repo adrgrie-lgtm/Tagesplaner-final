@@ -1,4 +1,4 @@
-const CACHE = 'tagesplaner-v18';
+const CACHE = 'tagesplaner-v19';
 const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './icon-512.png', './icon-192.png'];
 
 self.addEventListener('install', function (e) {
@@ -50,4 +50,23 @@ self.addEventListener('fetch', function (e) {
       })
     );
   }
+});
+
+self.addEventListener('push', function (e) {
+  let data = { title: '', body: '' };
+  try { data = e.data.json(); } catch (err) { try { data.body = e.data.text(); } catch (err2) { } }
+  e.waitUntil(self.registration.showNotification(data.title || '📅 Familien-Tagesplaner', {
+    body: data.body || '',
+    icon: 'icon-192.png',
+    badge: 'icon-192.png',
+    tag: 'tagesplaner-erinnerung'
+  }));
+});
+
+self.addEventListener('notificationclick', function (e) {
+  e.notification.close();
+  e.waitUntil(clients.matchAll({ type: 'window' }).then(function (list) {
+    for (let i = 0; i < list.length; i++) { const c = list[i]; if ('focus' in c) return c.focus(); }
+    return clients.openWindow('./');
+  }));
 });
