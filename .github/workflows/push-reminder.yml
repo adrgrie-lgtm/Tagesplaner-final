@@ -13,36 +13,11 @@ concurrency:
 jobs:
   remind:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: VAPID-Schluessel erzeugen (einmalig, mit Bordmitteln)
-        run: |
-          if [ ! -f docs/vapid-public.key ]; then
-            node -e "
-            const { generateKeyPairSync } = require('crypto');
-            const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
-            const pubRaw = publicKey.export({ type: 'spki', format: 'der' }).subarray(-65);
-            const privRaw = privateKey.export({ type: 'pkcs8', format: 'der' }).subarray(-32);
-            const b64u = b => Buffer.from(b).toString('base64url');
-            require('fs').writeFileSync('docs/vapid-public.key', b64u(pubRaw) + '
-');
-            require('fs').writeFileSync('docs/vapid-private.key', b64u(privRaw) + '
-');
-            console.log('VAPID-Schluessel erzeugt');
-            "
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add docs/vapid-public.key docs/vapid-private.key
-            git commit -m "VAPID-Schluessel fuer Push-Erinnerung erzeugt"
-            git push
-          else
-            echo "VAPID-Schluessel bereits vorhanden"
-          fi
       - name: web-push installieren
         run: npm install web-push
       - name: Erinnerung senden
