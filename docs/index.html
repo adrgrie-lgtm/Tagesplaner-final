@@ -339,6 +339,7 @@ function subscribeAll(code) {
     todos = snap.docs.map(function (d) { return d.data(); });
     saveLocalState(); renderTodos();
   }, function (err) { console.warn('To-do-Sync-Fehler:', err); });
+  if ('Notification' in window && Notification.permission === 'granted') subscribePush();
 }
 
 // ================= FAMILIE =================
@@ -1072,8 +1073,27 @@ function dismissReminder() {
 function enableReminders() {
   if (!('Notification' in window)) { alert('Dieses Gerät unterstützt keine Benachrichtigungen.'); return; }
   Notification.requestPermission().then(function (p) {
-    if (p === 'granted') { alert('✅ Erinnerungen aktiviert! Sie werden beim Öffnen der App an morgige Termine erinnert.'); checkReminders(); }
+    if (p === 'granted') { alert('✅ Erinnerungen aktiviert!\n\n– Beim Öffnen der App: Banner + Benachrichtigung\n– Zusätzlich abends echte Push-Nachricht aufs Handy, wenn morgen Termine anstehen.'); subscribePush(); checkReminders(); }
     else { alert('⚠️ Benachrichtigungen nicht erlaubt. Die Erinnerung erscheint dann nur als Banner in der App selbst.'); }
+  });
+}
+
+function urlB64ToUint8Array(b64) { const padding = '='.repeat((4 - b64.length % 4) % 4); const base64 = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/'); const raw = atob(base64); const arr = new Uint8Array(raw.length); for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i); return arr; }
+function b64Of(key) { return key ? btoa(String.fromCharCode.apply(null, new Uint8Array(key))) : ''; }
+function subscribePush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (!isSynced()) return;
+  navigator.serviceWorker.ready.then(function (reg) {
+    fetch('vapid-public.key').then(function (r) { return r.ok ? r.text() : null; }).then(function (key) {
+      if (!key) { console.warn('VAPID-Schluessel noch nicht vorhanden - Push spaeter erneut versuchen.'); return null; }
+      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key.trim()) });
+    }).then(function (sub) {
+      if (!sub) return;
+      let subId = localStorage.getItem('fp_pushSubId');
+      if (!subId) { subId = randId('push'); localStorage.setItem('fp_pushSubId', subId); }
+      const payload = { endpoint: sub.endpoint, p256dh: b64Of(sub.getKey('p256dh')), auth: b64Of(sub.getKey('auth')), updatedAt: new Date().toISOString() };
+      famDoc(family.inviteCode).collection('pushSubs').doc(subId).set(payload).then(function () { console.log('Push-Abo registriert'); }).catch(function (e) { console.warn('Push-Abo speichern fehlgeschlagen:', e); });
+    }).catch(function (e) { console.warn('Push-Abonnement fehlgeschlagen:', e); });
   });
 }
 
