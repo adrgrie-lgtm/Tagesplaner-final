@@ -37,15 +37,19 @@ async function main() {
   }
   webpush.setVapidDetails('mailto:adrgrie@gmail.com', pub, priv);
 
-  const [evRes, memRes, subRes] = await Promise.all([
+  const [evRes, memRes, subRes, sentRes] = await Promise.all([
     fetch(base + '/events?pageSize=300', { headers }),
     fetch(base + '/members?pageSize=100', { headers }),
-    fetch(base + '/pushSubs?pageSize=100', { headers })
+    fetch(base + '/pushSubs?pageSize=100', { headers }),
+    fetch(base + '/pushConfig/lastSent', { headers })
   ]);
   if (!evRes.ok) throw new Error('Firestore events nicht lesbar: ' + evRes.status);
   const evs = (await evRes.json()).documents || [];
   const mems = memRes.ok ? ((await memRes.json()).documents || []) : [];
   const subs = subRes.ok ? ((await subRes.json()).documents || []) : [];
+  const sentFields = sentRes.ok ? ((await sentRes.json()).fields || {}) : {};
+  const alreadySent = sentFields.date && sentFields.date.stringValue === tomorrow;
+  if (alreadySent) { console.log('Erinnerung fuer ' + tomorrow + ' wurde heute bereits gesendet - uebersprungen.'); return; }
 
   const nameOf = {};
   mems.forEach(function (d) { nameOf[d.name.split('/').pop()] = d.fields.name ? d.fields.name.stringValue : ''; });
@@ -84,5 +88,12 @@ async function main() {
     }
   }
   console.log('Push-Nachrichten gesendet: ' + sent);
+  if (sent > 0) {
+    await fetch(base + '/pushConfig/lastSent', {
+      method: 'PATCH',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: { date: { stringValue: tomorrow } } })
+    }).catch(function () { });
+  }
 }
 main().catch(function (e) { console.error(e.message); process.exit(1); });
