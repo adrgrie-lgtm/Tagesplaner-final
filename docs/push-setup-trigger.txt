@@ -1,1 +1,1 @@
-Dritter Anlauf: Schluessel liegen kuenftig in Firestore.
+Ausloeser fuer den Sende-Dienst (Firestore-Architektur). Damit die Tages-Erinnerung um 18:30 Uhr funktioniert, muss diese Datei im Repo bleiben.
