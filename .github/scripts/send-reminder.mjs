@@ -1,12 +1,9 @@
-import fs from 'fs';
 import webpush from 'web-push';
+import { generateKeyPairSync } from 'crypto';
 
 const API_KEY = 'AIzaSyDnxOWelFO4nNgxHNgX9j2x-zb0IrV0SHg';
 const PROJECT = 'familienplaner-6ac08';
 const CODE = 'GBGV-A9T6';
-const pub = fs.readFileSync('docs/vapid-public.key', 'utf8').trim();
-const priv = fs.readFileSync('docs/vapid-private.key', 'utf8').trim();
-webpush.setVapidDetails('mailto:adrgrie@gmail.com', pub, priv);
 
 const tomorrow = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date(Date.now() + 24 * 3600 * 1000));
 
@@ -18,6 +15,27 @@ async function main() {
   const token = (await auth.json()).idToken;
   const headers = { Authorization: 'Bearer ' + token };
   const base = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents/families/' + CODE;
+
+  const cfgRes = await fetch(base + '/pushConfig/vapid', { headers });
+  let pub, priv;
+  if (cfgRes.ok) {
+    const f = (await cfgRes.json()).fields || {};
+    pub = f.publicKey && f.publicKey.stringValue;
+    priv = f.privateKey && f.privateKey.stringValue;
+    console.log('VAPID-Schluessel aus Firestore geladen');
+  } else {
+    const kp = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+    pub = kp.publicKey.export({ type: 'spki', format: 'der' }).subarray(-65).toString('base64url');
+    priv = kp.privateKey.export({ type: 'pkcs8', format: 'der' }).subarray(-32).toString('base64url');
+    const put = await fetch(base + '/pushConfig/vapid', {
+      method: 'PATCH',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: { publicKey: { stringValue: pub }, privateKey: { stringValue: priv } } })
+    });
+    if (!put.ok) throw new Error('VAPID-Schluessel konnte nicht in Firestore gespeichert werden: ' + put.status);
+    console.log('VAPID-Schluessel neu erzeugt und in Firestore gespeichert');
+  }
+  webpush.setVapidDetails('mailto:adrgrie@gmail.com', pub, priv);
 
   const [evRes, memRes, subRes] = await Promise.all([
     fetch(base + '/events?pageSize=300', { headers }),
