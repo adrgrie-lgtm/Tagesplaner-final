@@ -1,1 +1,1 @@
-Einmaliger Ausloeser fuer die VAPID-Schluessel-Erzeugung.
+Zweiter Versuch der VAPID-Schluessel-Erzeugung.
