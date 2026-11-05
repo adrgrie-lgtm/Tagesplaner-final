@@ -20,13 +20,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: VAPID-Schluessel erzeugen (einmalig)
+      - name: VAPID-Schluessel erzeugen (einmalig, mit Bordmitteln)
         run: |
           if [ ! -f docs/vapid-public.key ]; then
-            npm install -g web-push > /dev/null 2>&1
-            KEYS=$(web-push generate-vapid-keys --json)
-            echo "$KEYS" | jq -r '.publicKey'  > docs/vapid-public.key
-            echo "$KEYS" | jq -r '.privateKey' > docs/vapid-private.key
+            node -e "
+            const { generateKeyPairSync } = require('crypto');
+            const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+            const pubRaw = publicKey.export({ type: 'spki', format: 'der' }).subarray(-65);
+            const privRaw = privateKey.export({ type: 'pkcs8', format: 'der' }).subarray(-32);
+            const b64u = b => Buffer.from(b).toString('base64url');
+            require('fs').writeFileSync('docs/vapid-public.key', b64u(pubRaw) + '
+');
+            require('fs').writeFileSync('docs/vapid-private.key', b64u(privRaw) + '
+');
+            console.log('VAPID-Schluessel erzeugt');
+            "
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add docs/vapid-public.key docs/vapid-private.key
@@ -36,6 +44,6 @@ jobs:
             echo "VAPID-Schluessel bereits vorhanden"
           fi
       - name: web-push installieren
-        run: npm install web-push > /dev/null 2>&1
+        run: npm install web-push
       - name: Erinnerung senden
         run: node .github/scripts/send-reminder.mjs
