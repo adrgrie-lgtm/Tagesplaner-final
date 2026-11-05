@@ -1084,7 +1084,7 @@ function subscribePush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   if (!isSynced()) return;
   navigator.serviceWorker.ready.then(function (reg) {
-    fetch('vapid-public.key').then(function (r) { return r.ok ? r.text() : null; }).then(function (key) {
+    famDoc(family.inviteCode).collection('pushConfig').doc('vapid').get().then(function (d) { return (d.exists && d.data() && d.data().publicKey) ? d.data().publicKey : null; }).then(function (key) {
       if (!key) { console.warn('VAPID-Schluessel noch nicht vorhanden - Push spaeter erneut versuchen.'); return null; }
       return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key.trim()) });
     }).then(function (sub) {
