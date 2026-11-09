@@ -2,13 +2,19 @@ name: Termin-Erinnerung pushen
 
 on:
   schedule:
-    - cron: '30 17 * * *'
+    - cron: '0 6 * * *'    # morgens: 07:00 Berlin (Winter) / 08:00 (Sommer)
+    - cron: '30 17 * * *'  # abends: 18:30 Berlin (Winter) / 19:30 (Sommer)
   workflow_dispatch:
+    inputs:
+      modus:
+        description: 'Welche Erinnerung: heute oder morgen'
+        required: false
+        default: 'morgen'
   push:
     branches: [main]
 
 concurrency:
-  group: push-reminder-v2
+  group: push-reminder-v3
 
 jobs:
   remind:
@@ -17,8 +23,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
       - name: web-push installieren
         run: npm install web-push
       - name: Erinnerung senden
-        run: node .github/scripts/send-reminder.mjs
+        run: |
+          MODUS="${{ github.event.inputs.modus }}"
+          if [ -z "$MODUS" ]; then
+            H=$(date -u +%H)
+            if [ "$H" -lt 12 ]; then MODUS=heute; else MODUS=morgen; fi
+          fi
+          echo "Sende Erinnerung (Modus: $MODUS)"
+          node .github/scripts/send-reminder.mjs "$MODUS"

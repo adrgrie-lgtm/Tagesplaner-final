@@ -1,1 +1,1 @@
-Ausloeser fuer den Sende-Dienst (Firestore-Architektur). Damit die Tages-Erinnerung um 18:30 Uhr funktioniert, muss diese Datei im Repo bleiben.
+Ausloeser fuer den Sende-Dienst (Firestore-Architektur). Damit die Erinnerungen um 07:00 Uhr (Tages-Termine) und 18:30 Uhr (Termine fuer morgen) funktionieren, muss diese Datei im Repo bleiben.

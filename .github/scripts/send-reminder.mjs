@@ -5,7 +5,11 @@ const API_KEY = 'AIzaSyDnxOWelFO4nNgxHNgX9j2x-zb0IrV0SHg';
 const PROJECT = 'familienplaner-6ac08';
 const CODE = 'GBGV-A9T6';
 
-const tomorrow = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date(Date.now() + 24 * 3600 * 1000));
+const MODE = (process.argv[2] === 'heute') ? 'heute' : 'morgen';
+const targetDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' })
+  .format(new Date(Date.now() + (MODE === 'heute' ? 0 : 24 * 3600 * 1000)));
+const label = MODE === 'heute' ? 'Heute' : 'Morgen';
+const markerDoc = MODE === 'heute' ? 'pushConfig/lastSentMorning' : 'pushConfig/lastSent';
 
 async function main() {
   const auth = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + API_KEY, {
@@ -41,22 +45,22 @@ async function main() {
     fetch(base + '/events?pageSize=300', { headers }),
     fetch(base + '/members?pageSize=100', { headers }),
     fetch(base + '/pushSubs?pageSize=100', { headers }),
-    fetch(base + '/pushConfig/lastSent', { headers })
+    fetch(base + '/' + markerDoc, { headers })
   ]);
   if (!evRes.ok) throw new Error('Firestore events nicht lesbar: ' + evRes.status);
   const evs = (await evRes.json()).documents || [];
   const mems = memRes.ok ? ((await memRes.json()).documents || []) : [];
   const subs = subRes.ok ? ((await subRes.json()).documents || []) : [];
   const sentFields = sentRes.ok ? ((await sentRes.json()).fields || {}) : {};
-  const alreadySent = sentFields.date && sentFields.date.stringValue === tomorrow;
-  if (alreadySent) { console.log('Erinnerung fuer ' + tomorrow + ' wurde heute bereits gesendet - uebersprungen.'); return; }
+  const alreadySent = sentFields.date && sentFields.date.stringValue === targetDate;
+  if (alreadySent) { console.log('Erinnerung fuer ' + targetDate + ' (' + label + ') wurde heute bereits gesendet - uebersprungen.'); return; }
 
   const nameOf = {};
   mems.forEach(function (d) { nameOf[d.name.split('/').pop()] = d.fields.name ? d.fields.name.stringValue : ''; });
 
   const list = evs.filter(function (d) {
     const f = d.fields || {};
-    return f.date && f.date.stringValue === tomorrow && !(f.isCompleted && f.isCompleted.booleanValue);
+    return f.date && f.date.stringValue === targetDate && !(f.isCompleted && f.isCompleted.booleanValue);
   }).map(function (d) {
     const f = d.fields;
     const time = f.startTime ? (f.startTime.stringValue || '') + ' ' : '';
@@ -64,9 +68,9 @@ async function main() {
     return time + (f.title ? f.title.stringValue : '') + who;
   }).sort();
 
-  if (list.length === 0) { console.log('Keine Termine fuer morgen (' + tomorrow + ') - keine Push-Nachricht.'); return; }
+  if (list.length === 0) { console.log('Keine Termine fuer ' + label.toLowerCase() + ' (' + targetDate + ') - keine Push-Nachricht.'); return; }
   const body = list.join('\n');
-  console.log('Erinnerung fuer ' + tomorrow + ': ' + body);
+  console.log('Erinnerung fuer ' + label + ' (' + targetDate + '): ' + body);
 
   let sent = 0;
   for (const d of subs) {
@@ -75,7 +79,7 @@ async function main() {
     try {
       await webpush.sendNotification(
         { endpoint: f.endpoint.stringValue, keys: { p256dh: f.p256dh.stringValue, auth: f.auth.stringValue } },
-        JSON.stringify({ title: '📅 Morgen: ' + list.length + (list.length === 1 ? ' Termin' : ' Termine'), body: body })
+        JSON.stringify({ title: '📅 ' + label + ': ' + list.length + (list.length === 1 ? ' Termin' : ' Termine'), body: body })
       );
       sent++;
     } catch (err) {
@@ -89,10 +93,10 @@ async function main() {
   }
   console.log('Push-Nachrichten gesendet: ' + sent);
   if (sent > 0) {
-    await fetch(base + '/pushConfig/lastSent', {
+    await fetch(base + '/' + markerDoc, {
       method: 'PATCH',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: { date: { stringValue: tomorrow } } })
+      body: JSON.stringify({ fields: { date: { stringValue: targetDate } } })
     }).catch(function () { });
   }
 }
