@@ -1,4 +1,5 @@
-import webpush from 'web-push';
+import * as webpushNs from 'web-push';
+const webpush = webpushNs.default ?? webpushNs;
 import { generateKeyPairSync } from 'crypto';
 
 const API_KEY = 'AIzaSyDnxOWelFO4nNgxHNgX9j2x-zb0IrV0SHg';
