@@ -1,10 +1,26 @@
 import * as webpushNs from 'web-push';
 const webpush = webpushNs.default ?? webpushNs;
-import { generateKeyPairSync } from 'crypto';
+import { generateKeyPairSync, createPublicKey, createPrivateKey, sign, verify } from 'crypto';
 
 const API_KEY = 'AIzaSyDnxOWelFO4nNgxHNgX9j2x-zb0IrV0SHg';
 const PROJECT = 'familienplaner-6ac08';
 const CODE = 'GBGV-A9T6';
+
+// Prueft, ob private und public Key wirklich zusammenpassen.
+// (Frueher wurde der Private Key aus dem pkcs8-Tail geschnitten - das ist aber
+// der Public-Key-Teil; FCM lehnte jedes damit signierte JWT mit 403 ab.)
+function pairValid(pub, priv) {
+  try {
+    const raw = Buffer.from(String(pub).replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+    if (raw.length !== 65 || raw[0] !== 0x04) return false;
+    const x = raw.subarray(1, 33).toString('base64url');
+    const y = raw.subarray(33).toString('base64url');
+    const pubKey = createPublicKey({ key: { kty: 'EC', crv: 'P-256', x, y }, format: 'jwk' });
+    const privKey = createPrivateKey({ key: { kty: 'EC', crv: 'P-256', x, y, d: String(priv) }, format: 'jwk' });
+    const msg = Buffer.from('tagesplaner-vapid-check');
+    return verify('sha256', msg, pubKey, sign('sha256', msg, privKey));
+  } catch (e) { return false; }
+}
 
 const MODE = (process.argv[2] === 'heute') ? 'heute' : 'morgen';
 const targetDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' })
@@ -13,31 +29,26 @@ const label = MODE === 'heute' ? 'Heute' : 'Morgen';
 const markerDoc = MODE === 'heute' ? 'pushConfig/lastSentMorning' : 'pushConfig/lastSent';
 
 async function main() {
-  const auth = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + API_KEY, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
-  });
+  const auth = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + API_KEY,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   if (!auth.ok) throw new Error('Anonyme Anmeldung fehlgeschlagen: ' + auth.status);
   const token = (await auth.json()).idToken;
   const headers = { Authorization: 'Bearer ' + token };
   const base = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents/families/' + CODE;
 
-  const cfgRes = await fetch(base + '/pushConfig/vapid', { headers });
   let pub, priv;
+  const cfgRes = await fetch(base + '/pushConfig/vapid', { headers });
   if (cfgRes.ok) {
     const f = (await cfgRes.json()).fields || {};
     pub = f.publicKey && f.publicKey.stringValue;
     priv = f.privateKey && f.privateKey.stringValue;
     console.log('VAPID-Schluessel aus Firestore geladen');
-  } else {
-    // Neu generieren, bis der Scalar NICHT mit 0x00 beginnt:
-    // solche Keys lehnt FCM pauschal mit 403 "invalid JWT" ab (web-push Issue #532)
-    let kp, pkcs8;
-    do {
-      kp = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
-      pkcs8 = kp.privateKey.export({ type: 'pkcs8', format: 'der' });
-    } while (pkcs8[pkcs8.length - 32] === 0);
+  }
+  if (!pub || !priv || !pairValid(pub, priv)) {
+    if (pub) console.warn('Gespeichertes VAPID-Schluesselpaar ist ungueltig - wird neu erzeugt.');
+    const kp = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
     pub = kp.publicKey.export({ type: 'spki', format: 'der' }).subarray(-65).toString('base64url');
-    priv = pkcs8.subarray(-32).toString('base64url');
+    priv = kp.privateKey.export({ format: 'jwk' }).d;
     const put = await fetch(base + '/pushConfig/vapid', {
       method: 'PATCH',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -45,6 +56,8 @@ async function main() {
     });
     if (!put.ok) throw new Error('VAPID-Schluessel konnte nicht in Firestore gespeichert werden: ' + put.status);
     console.log('VAPID-Schluessel neu erzeugt und in Firestore gespeichert');
+  } else {
+    console.log('VAPID-Schluesselpaar geprueft: gueltig.');
   }
   webpush.setVapidDetails('mailto:adrgrie@gmail.com', pub, priv);
 
