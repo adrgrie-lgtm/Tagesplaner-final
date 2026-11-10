@@ -1,1 +1,3 @@
-Ausloeser fuer den Sende-Dienst (Firestore-Architektur). Damit die Erinnerungen um 07:00 Uhr (Tages-Termine) und 18:30 Uhr (Termine fuer morgen) funktionieren, muss diese Datei im Repo bleiben.
+Trigger-Datei fuer den Erinnerungs-Workflow (push auf main = Testlauf).
+Letzter Test: 2026-11-10, erster Test mit neuem VAPID-Schluessel nach Neuregistrierung.
+Erinnerungen: morgens 07:00 (heute) und abends 18:30 (morgen), Europe/Berlin.
