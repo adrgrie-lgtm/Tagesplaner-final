@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>📅 Familien-Tagesplaner v9.2</title>
+<title>📅 Familien-Tagesplaner v9.3</title>
 <style>
 :root{--p:#6200ee;--pc:#e8ddff;--s:#03dac6;--sf:#f5f5f5;--e:#b00020;--sc:#4caf50;--os:#1c1b1f;--osv:#49454f}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
@@ -1103,7 +1103,7 @@ function subscribePush() {
       let subId = localStorage.getItem('fp_pushSubId');
       if (!subId) { subId = randId('push'); localStorage.setItem('fp_pushSubId', subId); }
       const boundKey = (sub.options && sub.options.applicationServerKey) ? b64Of(sub.options.applicationServerKey) : '';
-      const payload = { endpoint: sub.endpoint, p256dh: b64Of(sub.getKey('p256dh')), auth: b64Of(sub.getKey('auth')), keyUsed: r.key, boundKey: boundKey, updatedAt: new Date().toISOString() };
+      const payload = { endpoint: sub.endpoint, p256dh: b64Of(sub.getKey('p256dh')), auth: b64Of(sub.getKey('auth')), keyUsed: r.key, boundKey: boundKey, ua: navigator.userAgent, updatedAt: new Date().toISOString() };
       famDoc(family.inviteCode).collection('pushSubs').doc(subId).set(payload).then(function () { console.log('Push-Abo registriert, key=' + r.key.slice(0, 12) + '..., gebunden=' + boundKey.slice(0, 12) + '...'); pushFeedback(true); }).catch(function (e) { console.warn('Push-Abo speichern fehlgeschlagen:', e); pushFeedback(false, e && e.message ? e.message : String(e)); });
     }).catch(function (e) { console.warn('Push-Abonnement fehlgeschlagen:', e); pushFeedback(false, (e && e.message ? e.message : String(e)) + ' (Offline? Bitte mit Internet verbindung erneut versuchen.)'); });
   });
