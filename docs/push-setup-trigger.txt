@@ -1,3 +1,3 @@
 Trigger-Datei fuer den Erinnerungs-Workflow (push auf main = Testlauf).
-Letzter Test: 2026-11-10, erster Test mit neuem VAPID-Schluessel nach Neuregistrierung.
+Letzter Test: 2026-11-10, Finaler Verifikationslauf mit repariertem VAPID-Schluesselpaar (Push bestätigt auf dem Handy).
 Erinnerungen: morgens 07:00 (heute) und abends 18:30 (morgen), Europe/Berlin.
