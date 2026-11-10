@@ -29,9 +29,15 @@ async function main() {
     priv = f.privateKey && f.privateKey.stringValue;
     console.log('VAPID-Schluessel aus Firestore geladen');
   } else {
-    const kp = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+    // Neu generieren, bis der Scalar NICHT mit 0x00 beginnt:
+    // solche Keys lehnt FCM pauschal mit 403 "invalid JWT" ab (web-push Issue #532)
+    let kp, pkcs8;
+    do {
+      kp = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+      pkcs8 = kp.privateKey.export({ type: 'pkcs8', format: 'der' });
+    } while (pkcs8[pkcs8.length - 32] === 0);
     pub = kp.publicKey.export({ type: 'spki', format: 'der' }).subarray(-65).toString('base64url');
-    priv = kp.privateKey.export({ type: 'pkcs8', format: 'der' }).subarray(-32).toString('base64url');
+    priv = pkcs8.subarray(-32).toString('base64url');
     const put = await fetch(base + '/pushConfig/vapid', {
       method: 'PATCH',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -90,7 +96,7 @@ async function main() {
       const code = err.statusCode || err.message;
       failures.push('Abo ' + String(f.endpoint.stringValue).slice(-25) + ' -> ' + code);
       if (err.statusCode === 404 || err.statusCode === 410) {
-        await fetch(d.name, { method: 'DELETE', headers }).catch(function () { });
+        await fetch('https://firestore.googleapis.com/v1/' + d.name, { method: 'DELETE', headers }).catch(function () { });
         console.log('Abgelaufenes Push-Abo entfernt');
       }
     }
