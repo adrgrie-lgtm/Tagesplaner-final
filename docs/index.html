@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>📅 Familien-Tagesplaner v9</title>
+<title>📅 Familien-Tagesplaner v9.1</title>
 <style>
 :root{--p:#6200ee;--pc:#e8ddff;--s:#03dac6;--sf:#f5f5f5;--e:#b00020;--sc:#4caf50;--os:#1c1b1f;--osv:#49454f}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
@@ -1081,16 +1081,21 @@ function enableReminders() {
 function urlB64ToUint8Array(b64) { const padding = '='.repeat((4 - b64.length % 4) % 4); const base64 = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/'); const raw = atob(base64); const arr = new Uint8Array(raw.length); for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i); return arr; }
 function b64Of(key) { return key ? btoa(String.fromCharCode.apply(null, new Uint8Array(key))) : ''; }
 function pushFeedback(ok, msg) {
-  if (localStorage.getItem('fp_pushMsg')) return;
-  localStorage.setItem('fp_pushMsg', '1');
-  alert(ok ? '✅ Dieses Handy ist jetzt für die Termin-Push-Nachricht registriert!\n\nDu bekommst abends eine Benachrichtigung, wenn für den nächsten Tag Termine anstehen.' : '⚠️ Push-Registrierung fehlgeschlagen:\n\n' + (msg || 'Unbekannter Fehler'));
+  const k = 'fp_pushMsg' + new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem(k)) return;
+  localStorage.setItem(k, '1');
+  alert(ok ? '✅ Dieses Handy ist jetzt für die Termin-Push-Nachricht registriert!\n\nDu bekommst morgens (07:00) und abends (18:30) eine Benachrichtigung, wenn Termine anstehen.' : '⚠️ Push-Registrierung fehlgeschlagen:\n\n' + (msg || 'Unbekannter Fehler'));
 }
 function subscribePush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  if (!isSynced()) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) { pushFeedback(false, 'Dieser Browser unterstuetzt keine Web-Push-Nachrichten (iPhone: als App ans Startbildschirm hinzufuegen).'); return; }
+  if (!isSynced()) { pushFeedback(false, 'Familie nicht verbunden - bitte zuerst ueber den Familien-Code verbinden.'); return; }
   navigator.serviceWorker.ready.then(function (reg) {
-    famDoc(family.inviteCode).collection('pushConfig').doc('vapid').get().then(function (d) { return (d.exists && d.data() && d.data().publicKey) ? d.data().publicKey : null; }).then(function (key) {
-      if (!key) { console.warn('VAPID-Schluessel noch nicht vorhanden - Push spaeter erneut versuchen.'); return null; }
+    reg.pushManager.getSubscription().then(function (existing) {
+      return existing ? existing.unsubscribe().then(function () { return null; }) : Promise.resolve(null);
+    }).then(function () {
+      return famDoc(family.inviteCode).collection('pushConfig').doc('vapid').get();
+    }).then(function (d) { return (d.exists && d.data() && d.data().publicKey) ? d.data().publicKey : null; }).then(function (key) {
+      if (!key) { pushFeedback(false, 'VAPID-Schluessel nicht gefunden - bitte spaeter erneut versuchen.'); return null; }
       return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key.trim()) });
     }).then(function (sub) {
       if (!sub) return;
@@ -1098,7 +1103,7 @@ function subscribePush() {
       if (!subId) { subId = randId('push'); localStorage.setItem('fp_pushSubId', subId); }
       const payload = { endpoint: sub.endpoint, p256dh: b64Of(sub.getKey('p256dh')), auth: b64Of(sub.getKey('auth')), updatedAt: new Date().toISOString() };
       famDoc(family.inviteCode).collection('pushSubs').doc(subId).set(payload).then(function () { console.log('Push-Abo registriert'); pushFeedback(true); }).catch(function (e) { console.warn('Push-Abo speichern fehlgeschlagen:', e); pushFeedback(false, e && e.message ? e.message : String(e)); });
-    }).catch(function (e) { console.warn('Push-Abonnement fehlgeschlagen:', e); });
+    }).catch(function (e) { console.warn('Push-Abonnement fehlgeschlagen:', e); pushFeedback(false, e && e.message ? e.message : String(e)); });
   });
 }
 
