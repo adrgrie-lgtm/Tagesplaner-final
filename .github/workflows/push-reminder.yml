@@ -2,8 +2,12 @@ name: Termin-Erinnerung pushen
 
 on:
   schedule:
-    - cron: '0 6 * * *'    # morgens: 07:00 Berlin (Winter) / 08:00 (Sommer)
-    - cron: '30 17 * * *'  # abends: 18:30 Berlin (Winter) / 19:30 (Sommer)
+    - cron: '0 6 * * *'    # morgens 07:00 Berlin (Winter) / 08:00 (Sommer)
+    - cron: '15 6 * * *'   # morgens Retry (+15 min, Dedup verhindert Doppel)
+    - cron: '0 7 * * *'    # morgens Retry (+60 min)
+    - cron: '30 17 * * *'  # abends 18:30 Berlin (Winter) / 19:30 (Sommer)
+    - cron: '45 17 * * *'  # abends Retry (+15 min)
+    - cron: '0 18 * * *'   # abends Retry (+30 min)
   workflow_dispatch:
     inputs:
       modus:
@@ -14,7 +18,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: push-reminder-v3
+  group: push-reminder-v4
 
 permissions:
   contents: read
@@ -33,10 +37,17 @@ jobs:
       - name: Erinnerung senden
         run: |
           set -o pipefail
-          MODUS="${{ github.event.inputs.modus }}"
-          if [ -z "$MODUS" ]; then
-            H=$(date -u +%H)
-            if [ "$H" -lt 12 ]; then MODUS=heute; else MODUS=morgen; fi
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            case "${{ github.event.schedule }}" in
+              '0 6 * * *'|'15 6 * * *'|'0 7 * * *') MODUS=heute;;
+              *) MODUS=morgen;;
+            esac
+          else
+            MODUS="${{ github.event.inputs.modus }}"
+            if [ -z "$MODUS" ]; then
+              H=$(date -u +%H)
+              if [ "$H" -lt 12 ]; then MODUS=heute; else MODUS=morgen; fi
+            fi
           fi
           echo "Sende Erinnerung (Modus: $MODUS)"
           node .github/scripts/send-reminder.mjs "$MODUS" 2>&1 | tee remind.log

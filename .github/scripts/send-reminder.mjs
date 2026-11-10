@@ -73,10 +73,13 @@ async function main() {
   const body = list.join('\n');
   console.log('Erinnerung fuer ' + label + ' (' + targetDate + '): ' + body);
 
+  if (subs.length === 0) { console.warn('WARNUNG: Keine Push-Abos registriert - Familie hat noch kein Geraet mit Erinnerungen aktiviert.'); return; }
+
   let sent = 0;
+  const failures = [];
   for (const d of subs) {
     const f = d.fields || {};
-    if (!f.endpoint || !f.p256dh || !f.auth) continue;
+    if (!f.endpoint || !f.p256dh || !f.auth) { failures.push('Abo unvollstaendig (endpoint/keys fehlen)'); continue; }
     try {
       await webpush.sendNotification(
         { endpoint: f.endpoint.stringValue, keys: { p256dh: f.p256dh.stringValue, auth: f.auth.stringValue } },
@@ -84,21 +87,24 @@ async function main() {
       );
       sent++;
     } catch (err) {
+      const code = err.statusCode || err.message;
+      failures.push('Abo ' + String(f.endpoint.stringValue).slice(-25) + ' -> ' + code);
       if (err.statusCode === 404 || err.statusCode === 410) {
         await fetch(d.name, { method: 'DELETE', headers }).catch(function () { });
         console.log('Abgelaufenes Push-Abo entfernt');
-      } else {
-        console.warn('Push fehlgeschlagen:', err.statusCode || err.message);
       }
     }
   }
-  console.log('Push-Nachrichten gesendet: ' + sent);
-  if (sent > 0) {
-    await fetch(base + '/' + markerDoc, {
-      method: 'PATCH',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: { date: { stringValue: targetDate } } })
-    }).catch(function () { });
+  console.log('Push-Nachrichten gesendet: ' + sent + ' von ' + subs.length);
+  if (sent === 0) {
+    console.error('PUSH-FEHLER: Es gibt Termine und Abos, aber keine Zustellung moeglich. Fehler: ' + failures.join(' | '));
+    process.exit(1);
   }
+  const mRes = await fetch(base + '/' + markerDoc, {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { date: { stringValue: targetDate } } })
+  });
+  if (!mRes.ok) console.warn('WARNUNG: Marker konnte nicht geschrieben werden (' + mRes.status + ') - naechster Lauf sendet eventuell erneut.');
 }
 main().catch(function (e) { console.error(e.message); process.exit(1); });
