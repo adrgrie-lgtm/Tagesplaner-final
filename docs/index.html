@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>📅 Familien-Tagesplaner v9.1</title>
+<title>📅 Familien-Tagesplaner v9.2</title>
 <style>
 :root{--p:#6200ee;--pc:#e8ddff;--s:#03dac6;--sf:#f5f5f5;--e:#b00020;--sc:#4caf50;--os:#1c1b1f;--osv:#49454f}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
@@ -1093,17 +1093,19 @@ function subscribePush() {
     reg.pushManager.getSubscription().then(function (existing) {
       return existing ? existing.unsubscribe().then(function () { return null; }) : Promise.resolve(null);
     }).then(function () {
-      return famDoc(family.inviteCode).collection('pushConfig').doc('vapid').get();
+      return famDoc(family.inviteCode).collection('pushConfig').doc('vapid').get({ source: 'server' });
     }).then(function (d) { return (d.exists && d.data() && d.data().publicKey) ? d.data().publicKey : null; }).then(function (key) {
       if (!key) { pushFeedback(false, 'VAPID-Schluessel nicht gefunden - bitte spaeter erneut versuchen.'); return null; }
-      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key.trim()) });
-    }).then(function (sub) {
-      if (!sub) return;
+      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key.trim()) }).then(function (sub) { return { sub: sub, key: key }; });
+    }).then(function (r) {
+      if (!r) return;
+      const sub = r.sub;
       let subId = localStorage.getItem('fp_pushSubId');
       if (!subId) { subId = randId('push'); localStorage.setItem('fp_pushSubId', subId); }
-      const payload = { endpoint: sub.endpoint, p256dh: b64Of(sub.getKey('p256dh')), auth: b64Of(sub.getKey('auth')), updatedAt: new Date().toISOString() };
-      famDoc(family.inviteCode).collection('pushSubs').doc(subId).set(payload).then(function () { console.log('Push-Abo registriert'); pushFeedback(true); }).catch(function (e) { console.warn('Push-Abo speichern fehlgeschlagen:', e); pushFeedback(false, e && e.message ? e.message : String(e)); });
-    }).catch(function (e) { console.warn('Push-Abonnement fehlgeschlagen:', e); pushFeedback(false, e && e.message ? e.message : String(e)); });
+      const boundKey = (sub.options && sub.options.applicationServerKey) ? b64Of(sub.options.applicationServerKey) : '';
+      const payload = { endpoint: sub.endpoint, p256dh: b64Of(sub.getKey('p256dh')), auth: b64Of(sub.getKey('auth')), keyUsed: r.key, boundKey: boundKey, updatedAt: new Date().toISOString() };
+      famDoc(family.inviteCode).collection('pushSubs').doc(subId).set(payload).then(function () { console.log('Push-Abo registriert, key=' + r.key.slice(0, 12) + '..., gebunden=' + boundKey.slice(0, 12) + '...'); pushFeedback(true); }).catch(function (e) { console.warn('Push-Abo speichern fehlgeschlagen:', e); pushFeedback(false, e && e.message ? e.message : String(e)); });
+    }).catch(function (e) { console.warn('Push-Abonnement fehlgeschlagen:', e); pushFeedback(false, (e && e.message ? e.message : String(e)) + ' (Offline? Bitte mit Internet verbindung erneut versuchen.)'); });
   });
 }
 
