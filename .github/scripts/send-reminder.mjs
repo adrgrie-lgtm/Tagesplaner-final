@@ -5,6 +5,7 @@ import { generateKeyPairSync, createPublicKey, createPrivateKey, sign, verify } 
 const API_KEY = 'AIzaSyDnxOWelFO4nNgxHNgX9j2x-zb0IrV0SHg';
 const PROJECT = 'familienplaner-6ac08';
 const CODE = 'GBGV-A9T6';
+const TZ = 'Europe/Berlin';
 
 // Prueft, ob private und public Key wirklich zusammenpassen.
 // (Frueher wurde der Private Key aus dem pkcs8-Tail geschnitten - das ist aber
@@ -22,8 +23,25 @@ function pairValid(pub, priv) {
   } catch (e) { return false; }
 }
 
-const MODE = (process.argv[2] === 'heute') ? 'heute' : 'morgen';
-const targetDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' })
+// ---- Modus & Zeitfenster (Berliner Zeit) ----
+// Der Workflow laeuft stuendlich. Gesendet wird nur innerhalb sinnvoller
+// Zeitfenster; GitHub verspaetet geplante Laeufe regelmaessig um Stunden,
+// deshalb entscheidet DIES Skript, ob der aktuelle Zeitpunkt passt.
+const berlinNow = new Date(new Date().toLocaleString('en-US', { timeZone: TZ }));
+const berlinHour = berlinNow.getHours();
+const arg = process.argv[2];
+let MODE;
+if (arg === 'heute' || arg === 'morgen') {
+  MODE = arg; // manueller Override (workflow_dispatch)
+} else if (berlinHour >= 5 && berlinHour < 13) {
+  MODE = 'heute';
+} else if (berlinHour >= 17 && berlinHour < 23) {
+  MODE = 'morgen';
+} else {
+  console.log('Ausserhalb des Zeitfensters (' + berlinHour.toFixed().padStart(2, '0') + ':' + String(berlinNow.getMinutes()).padStart(2, '0') + ' Uhr Berlin) - kein Senden noetig.');
+  process.exit(0);
+}
+const targetDate = new Intl.DateTimeFormat('en-CA', { timeZone: TZ })
   .format(new Date(Date.now() + (MODE === 'heute' ? 0 : 24 * 3600 * 1000)));
 const label = MODE === 'heute' ? 'Heute' : 'Morgen';
 const markerDoc = MODE === 'heute' ? 'pushConfig/lastSentMorning' : 'pushConfig/lastSent';
@@ -100,9 +118,12 @@ async function main() {
     const f = d.fields || {};
     if (!f.endpoint || !f.p256dh || !f.auth) { failures.push('Abo unvollstaendig (endpoint/keys fehlen)'); continue; }
     try {
+      // TTL 24h + hohe Prioritaet: hilft gegen Zustellverzoegerung im
+      // Android-Doze-Modus (07:00-Uhr-Erinnerung liegt mitten im Ruhemodus).
       await webpush.sendNotification(
         { endpoint: f.endpoint.stringValue, keys: { p256dh: f.p256dh.stringValue, auth: f.auth.stringValue } },
-        JSON.stringify({ title: '📅 ' + label + ': ' + list.length + (list.length === 1 ? ' Termin' : ' Termine'), body: body })
+        JSON.stringify({ title: '📅 ' + label + ': ' + list.length + (list.length === 1 ? ' Termin' : ' Termine'), body: body }),
+        { TTL: 86400, urgency: 'high' }
       );
       sent++;
     } catch (err) {

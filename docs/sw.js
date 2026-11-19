@@ -1,4 +1,4 @@
-const CACHE = 'tagesplaner-v19';
+const CACHE = 'tagesplaner-v20';
 const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './icon-512.png', './icon-192.png'];
 
 self.addEventListener('install', function (e) {
@@ -69,4 +69,55 @@ self.addEventListener('notificationclick', function (e) {
     for (let i = 0; i < list.length; i++) { const c = list[i]; if ('focus' in c) return c.focus(); }
     return clients.openWindow('./');
   }));
+});
+
+// ================= PUSH-ABO SELBSTHEILUNG =================
+// Chrome erneuert Push-Tokens gelegentlich von selbst (pushsubscriptionchange).
+// Ohne diesen Handler wuerde die Datenbank weiter den toten Endpunkt halten
+// und alle Erinnerungen ins Leere laufen. Wir melden uns neu an und
+// aktualisieren das passende Dokument direkt in Firestore.
+function idbGetMeta() {
+  return new Promise(function (resolve) {
+    try {
+      const req = indexedDB.open('tagesplaner-meta', 1);
+      req.onupgradeneeded = function (e) { e.target.result.createObjectStore('meta'); };
+      req.onsuccess = function (e) {
+        try {
+          const store = e.target.result.transaction('meta', 'readonly').objectStore('meta');
+          const get = store.get('push');
+          get.onsuccess = function () { resolve(get.value || null); };
+          get.onerror = function () { resolve(null); };
+        } catch (err) { resolve(null); }
+      };
+      req.onerror = function () { resolve(null); };
+    } catch (e) { resolve(null); }
+  });
+}
+function swUrlB64ToUint8Array(b64) { const padding = '='.repeat((4 - b64.length % 4) % 4); const base64 = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/'); const raw = atob(base64); const arr = new Uint8Array(raw.length); for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i); return arr; }
+function swB64Of(key) { if (!key) return ''; const arr = new Uint8Array(key); let s = ''; for (let i = 0; i < arr.length; i++) s += String.fromCharCode(arr[i]); return btoa(s); }
+
+self.addEventListener('pushsubscriptionchange', function (e) {
+  e.waitUntil((async function () {
+    try {
+      const meta = await idbGetMeta();
+      if (!meta || !meta.familyCode || !meta.subId) return;
+      const API_KEY = 'AIzaSyDnxOWelFO4nNgxHNgX9j2x-zb0IrV0SHg';
+      const base = 'https://firestore.googleapis.com/v1/projects/familienplaner-6ac08/databases/(default)/documents/families/' + meta.familyCode;
+      const authRes = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + API_KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const tok = (await authRes.json()).idToken;
+      const cfgRes = await fetch(base + '/pushConfig/vapid', { headers: { Authorization: 'Bearer ' + tok } });
+      const cfg = (await cfgRes.json()).fields || {};
+      const key = (cfg.publicKey && cfg.publicKey.stringValue) ? String(cfg.publicKey.stringValue).trim() : null;
+      if (!key) return;
+      const sub = await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: swUrlB64ToUint8Array(key) });
+      const fields = {
+        endpoint: { stringValue: sub.endpoint },
+        p256dh: { stringValue: swB64Of(sub.getKey('p256dh')) },
+        auth: { stringValue: swB64Of(sub.getKey('auth')) },
+        ua: { stringValue: navigator.userAgent },
+        updatedAt: { stringValue: new Date().toISOString() }
+      };
+      await fetch(base + '/pushSubs/' + meta.subId, { method: 'PATCH', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: fields }) });
+    } catch (err) { }
+  })());
 });

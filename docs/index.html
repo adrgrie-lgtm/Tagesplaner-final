@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>📅 Familien-Tagesplaner v9.3</title>
+<title>📅 Familien-Tagesplaner v9.4</title>
 <style>
 :root{--p:#6200ee;--pc:#e8ddff;--s:#03dac6;--sf:#f5f5f5;--e:#b00020;--sc:#4caf50;--os:#1c1b1f;--osv:#49454f}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
@@ -1086,22 +1086,45 @@ function pushFeedback(ok, msg) {
   localStorage.setItem(k, '1');
   alert(ok ? '✅ Dieses Handy ist jetzt für die Termin-Push-Nachricht registriert!\n\nDu bekommst morgens (07:00) und abends (18:30) eine Benachrichtigung, wenn Termine anstehen.' : '⚠️ Push-Registrierung fehlgeschlagen:\n\n' + (msg || 'Unbekannter Fehler'));
 }
+// Speichert Familien-Code + Abo-ID in IndexedDB, damit der Service Worker
+// bei automatischen Token-Erneuerungen (pushsubscriptionchange) das richtige
+// Firestore-Dokument selbst aktualisieren kann.
+function idbSaveMeta(meta) {
+  try {
+    const req = indexedDB.open('tagesplaner-meta', 1);
+    req.onupgradeneeded = function (e) { e.target.result.createObjectStore('meta'); };
+    req.onsuccess = function (e) {
+      try { e.target.result.transaction('meta', 'readwrite').objectStore('meta').put(meta, 'push'); } catch (err) { }
+    };
+  } catch (e) { }
+}
 function subscribePush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) { pushFeedback(false, 'Dieser Browser unterstuetzt keine Web-Push-Nachrichten (iPhone: als App ans Startbildschirm hinzufuegen).'); return; }
   if (!isSynced()) { pushFeedback(false, 'Familie nicht verbunden - bitte zuerst ueber den Familien-Code verbinden.'); return; }
   navigator.serviceWorker.ready.then(function (reg) {
-    reg.pushManager.getSubscription().then(function (existing) {
-      return existing ? existing.unsubscribe().then(function () { return null; }) : Promise.resolve(null);
-    }).then(function () {
-      return famDoc(family.inviteCode).collection('pushConfig').doc('vapid').get({ source: 'server' });
-    }).then(function (d) { return (d.exists && d.data() && d.data().publicKey) ? d.data().publicKey : null; }).then(function (key) {
+    // SERVER-SCHLUESSEL ZUERST LADEN: Ein bestehendes Abo wird nur dann ersetzt,
+    // wenn es an einen anderen Schluessel gebunden ist. Frueher wurde das Abo bei
+    // jedem App-Oeffnen vor der Neuanmeldung gekuendigt - schlug die Anmeldung fehl
+    // (z. B. offline), blieb der alte, tote Endpunkt in der Datenbank und alle
+    // Erinnerungen liefen ins Leere, bis die App wieder erfolgreich geoeffnet wurde.
+    famDoc(family.inviteCode).collection('pushConfig').doc('vapid').get({ source: 'server' }).then(function (d) {
+      const key = (d.exists && d.data() && d.data().publicKey) ? String(d.data().publicKey).trim() : null;
       if (!key) { pushFeedback(false, 'VAPID-Schluessel nicht gefunden - bitte spaeter erneut versuchen.'); return null; }
-      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key.trim()) }).then(function (sub) { return { sub: sub, key: key }; });
+      const raw = urlB64ToUint8Array(key);
+      return reg.pushManager.getSubscription().then(function (existing) {
+        const cur = (existing && existing.options && existing.options.applicationServerKey) ? new Uint8Array(existing.options.applicationServerKey) : null;
+        const same = !!(cur && cur.length === raw.length && raw.every(function (b, i) { return cur[i] === b; }));
+        if (same) return { sub: existing, key: key };
+        return (existing ? existing.unsubscribe() : Promise.resolve()).then(function () {
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
+        }).then(function (sub) { return { sub: sub, key: key }; });
+      });
     }).then(function (r) {
       if (!r) return;
       const sub = r.sub;
       let subId = localStorage.getItem('fp_pushSubId');
       if (!subId) { subId = randId('push'); localStorage.setItem('fp_pushSubId', subId); }
+      idbSaveMeta({ familyCode: family.inviteCode, subId: subId });
       const boundKey = (sub.options && sub.options.applicationServerKey) ? b64Of(sub.options.applicationServerKey) : '';
       const payload = { endpoint: sub.endpoint, p256dh: b64Of(sub.getKey('p256dh')), auth: b64Of(sub.getKey('auth')), keyUsed: r.key, boundKey: boundKey, ua: navigator.userAgent, updatedAt: new Date().toISOString() };
       famDoc(family.inviteCode).collection('pushSubs').doc(subId).set(payload).then(function () { console.log('Push-Abo registriert, key=' + r.key.slice(0, 12) + '..., gebunden=' + boundKey.slice(0, 12) + '...'); pushFeedback(true); }).catch(function (e) { console.warn('Push-Abo speichern fehlgeschlagen:', e); pushFeedback(false, e && e.message ? e.message : String(e)); });

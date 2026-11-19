@@ -2,23 +2,24 @@ name: Termin-Erinnerung pushen
 
 on:
   schedule:
-    - cron: '0 6 * * *'    # morgens 07:00 Berlin (Winter) / 08:00 (Sommer)
-    - cron: '15 6 * * *'   # morgens Retry (+15 min, Dedup verhindert Doppel)
-    - cron: '0 7 * * *'    # morgens Retry (+60 min)
-    - cron: '30 17 * * *'  # abends 18:30 Berlin (Winter) / 19:30 (Sommer)
-    - cron: '45 17 * * *'  # abends Retry (+15 min)
-    - cron: '0 18 * * *'   # abends Retry (+30 min)
+    # Stuendlich laufen lassen - send-reminder.mjs entscheidet SELBST,
+    # ob der Zeitpunkt im Zeitfenster liegt (Berlin 5-13 Uhr: "heute",
+    # 17-23 Uhr: "morgen") und dedupliziert pro Tag (Firestore-Marker).
+    # Grund: GitHub verspaetet geplante Workflow-Laeufe regelmaessig um
+    # mehrere Stunden; feste Einzel-Crons um 06:00/17:30 UTC kamen real
+    # erst nachmittags bzw. nach Mitternacht an.
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       modus:
-        description: 'Welche Erinnerung: heute oder morgen'
+        description: 'Welche Erinnerung: heute oder morgen (leer = automatisch nach Berliner Uhrzeit, evtl. gar nicht senden)'
         required: false
-        default: 'morgen'
+        default: ''
   push:
     branches: [main]
 
 concurrency:
-  group: push-reminder-v4
+  group: push-reminder-v5
 
 permissions:
   contents: read
@@ -37,20 +38,13 @@ jobs:
       - name: Erinnerung senden
         run: |
           set -o pipefail
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            case "${{ github.event.schedule }}" in
-              '0 6 * * *'|'15 6 * * *'|'0 7 * * *') MODUS=heute;;
-              *) MODUS=morgen;;
-            esac
+          MODUS="${{ github.event.inputs.modus }}"
+          if [ -n "$MODUS" ]; then
+            echo "Sende Erinnerung (Modus: $MODUS)"
+            node .github/scripts/send-reminder.mjs "$MODUS" 2>&1 | tee remind.log
           else
-            MODUS="${{ github.event.inputs.modus }}"
-            if [ -z "$MODUS" ]; then
-              H=$(date -u +%H)
-              if [ "$H" -lt 12 ]; then MODUS=heute; else MODUS=morgen; fi
-            fi
+            node .github/scripts/send-reminder.mjs 2>&1 | tee remind.log
           fi
-          echo "Sende Erinnerung (Modus: $MODUS)"
-          node .github/scripts/send-reminder.mjs "$MODUS" 2>&1 | tee remind.log
       - name: Fehler in Issue posten
         if: failure()
         run: |
